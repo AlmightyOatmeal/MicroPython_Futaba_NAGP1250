@@ -50,17 +50,15 @@ CN2 pin 1 is located at the far right when looking at the back, which is indicat
 
 Mine are configured for synchronous serial with J2 shorted, and that is how I designed this driver with that in mind.
 
-| J0      | J1      | J2      | J3      | Function                                                            |
-|---------|---------|---------|---------|---------------------------------------------------------------------|
-| open    | open    | open    | X       | Asynchronous serial at 38400 baud                                   |
-| shorted | open    | open    | X       | Asynchronous serial at 19200 baud                                   |
-| open    | shorted | open    | X       | Asynchronous serial at 9600 baud                                    |
-| shorted | shorted | open    | X       | Asynchronous serial at 115200 baud                                  |
-| x       | x       | shorted | X       | Synchronous serial                                                  |
-| x       | x       | x       | shorted | Self-test image displayed at power-up and after a reset for about 4 |
+| J0      | J1      | J2      | J3      | Function                                                                                                                                                         |
+|---------|---------|---------|---------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| open    | open    | open    | X       | Asynchronous serial at 38400 baud                                                                                                                                |
+| shorted | open    | open    | X       | Asynchronous serial at 19200 baud                                                                                                                                |
+| open    | shorted | open    | X       | Asynchronous serial at 9600 baud                                                                                                                                 |
+| shorted | shorted | open    | X       | Asynchronous serial at 115200 baud                                                                                                                               |
+| x       | x       | shorted | X       | Synchronous serial                                                                                                                                               |
+| x       | x       | x       | shorted | Self-test image displayed at power-up and after a reset for about 4 seconds before the all dots on screen saver is displayed. (image includes software revision) |
 
-seconds before the all dots on screen saver is displayed.
-(image includes software revision) |
 (x = ignored)
 
 ### Interface
