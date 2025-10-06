@@ -181,6 +181,7 @@ vfd.write_text(text="Hello, World!")
 ```
 
 ![Display with letters h2 v1](_images/display_h2_v1.jpg)
+
 (my camera shutter speed didn't capture the whole image)
 
 #### Horizontal span 1, Vertical span 2
