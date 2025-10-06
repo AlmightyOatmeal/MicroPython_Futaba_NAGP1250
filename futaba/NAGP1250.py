@@ -167,8 +167,8 @@ class NAGP1250:
         """
         Resets the display via reset pin.
 
-        :raises TypeError: If the `pin_reset` attribute is not set as expected.
         :return: None
+        :raises TypeError: If the `pin_reset` attribute is not set as expected.
         """
         if not self.pin_reset:
             return None

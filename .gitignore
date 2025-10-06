@@ -172,5 +172,8 @@ boot.py
 *.bmp
 requirements.txt
 conf.py
-futuba/conf.py
+futaba/conf.py
 vector*
+make.bat
+Makefile
+docs/
