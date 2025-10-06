@@ -447,8 +447,11 @@ class NAGP1250:
 
         The time unit is approximately t*14ms.
 
-        **SEIZURE WARNING:** It is possible to make this screen blink at a rate that could trigger photosensitive
-        epileptic episodes.
+        +----------------------------------------------------------------------------------------------------------+
+        | **SEIZURE WARNING:**                                                                                     |
+        +==========================================================================================================+
+        | It is possible to make this screen blink at a rate that could trigger photosensitive epileptic episodes. |
+        +----------------------------------------------------------------------------------------------------------+
 
         `pattern` options are:
 
