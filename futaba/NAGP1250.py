@@ -186,20 +186,22 @@ class NAGP1250:
         """
         Sets the font table for the display for characters 20h and 7Fh.
 
-        0x00 = America
-        0x01 = France
-        0x02 = Germany
-        0x03 = England
-        0x04 = Denmark 1
-        0x05 = Sweden
-        0x06 = Italy
-        0x07 = Spain 1
-        0x08 = Japan
-        0x09 = Norway
-        0x0A = Denmark 2
-        0x0B = Spain 2
-        0x0C = Latin America
-        0x0D = Korea
+        `font_id` options are:
+
+        - 0x00 = America
+        - 0x01 = France
+        - 0x02 = Germany
+        - 0x03 = England
+        - 0x04 = Denmark 1
+        - 0x05 = Sweden
+        - 0x06 = Italy
+        - 0x07 = Spain 1
+        - 0x08 = Japan
+        - 0x09 = Norway
+        - 0x0A = Denmark 2
+        - 0x0B = Spain 2
+        - 0x0C = Latin America
+        - 0x0D = Korea
 
         :param font_id: The identifier for the font to be selected.
         :type font_id: int
@@ -214,16 +216,18 @@ class NAGP1250:
         """
         Sets the character code for the display for characters 0x80 - 0xFF.
 
-        0x00 = PC437 (US – European)
-        0x01 = Katakana – Japanese
-        0x02 = PC850 (Multilingual)
-        0x03 = PC860 (Portuguese)
-        0x04 = PC863 (Canadian – French)
-        0x05 = PC865 Nordic
-        0x10 = WPC1252
-        0x11 = PC866 (Cyrillic #2)
-        0x12 = PC852 (Latin #2)
-        0x13 = PC858
+        `code` options are:
+
+        - 0x00 = PC437 (US – European)
+        - 0x01 = Katakana – Japanese
+        - 0x02 = PC850 (Multilingual)
+        - 0x03 = PC860 (Portuguese)
+        - 0x04 = PC863 (Canadian – French)
+        - 0x05 = PC865 Nordic
+        - 0x10 = WPC1252
+        - 0x11 = PC866 (Cyrillic #2)
+        - 0x12 = PC852 (Latin #2)
+        - 0x13 = PC858
 
         :param code: The identifier for the font to be selected.
         :type code: int
@@ -265,14 +269,16 @@ class NAGP1250:
     def set_luminance(self, luminance: int) -> None:
         """Set display brightness.
 
-        1 = 12.5%
-        2 = 25%
-        3 = 37.5%
-        4 = 50%
-        5 = 62.5%
-        6 = 75%
-        7 = 87.5%
-        8 = 100%
+        `luminance` options are:
+
+        - 1 = 12.5%
+        - 2 = 25%
+        - 3 = 37.5%
+        - 4 = 50%
+        - 5 = 62.5%
+        - 6 = 75%
+        - 7 = 87.5%
+        - 8 = 100%
 
         :param luminance: Luminance level.
         :type luminance: int
@@ -281,6 +287,7 @@ class NAGP1250:
         """
         if not (1 <= luminance <= 8):
             raise ValueError("Luminance must be 1–8")
+
         self.send_byte([0x1F, 0x58, luminance])
 
     def set_overwrite_mode(self) -> None:
@@ -399,6 +406,25 @@ class NAGP1250:
         ]
         self.send_byte(payload)
 
+    def set_reverse_display(self, mode: int) -> None:
+        """
+        Specify or Cancel Reverse Display
+
+        This only applies to new data, existing data on the display will not be affected.
+
+        0 = Cancel Reverse Display
+        1 = Reverse Display
+
+        :param mode: The reverse display mode to set, 1 reverses the display and 0 returns to normal.
+        :type mode: int
+        :return: None
+        :raises ValueError: If the mode is not 0 or 1.
+        """
+        if not (0 <= mode <= 1):
+            raise ValueError("Mode must be either 0 or 1")
+
+        self.send_byte([0x1F, 0x72, mode])
+
     def clear_window(self, window_num: int = 0) -> None:
         """
         Clears the content of a specific window.
@@ -413,6 +439,47 @@ class NAGP1250:
 
         self.do_select_window(window_num)
         self.send_byte([0x0C])
+
+    def do_blink_display(self, pattern: int, normal_time: int, blink_time: int, repetition: int) -> None:
+        """
+        This method controls a blinking display based on the specified pattern, normal display time, blink display
+        time, and the number of repetitions.
+
+        The time unit is approximately t*14ms.
+
+        **SEIZURE WARNING:** It is possible to make this screen blink at a rate that could trigger photosensitive
+        epileptic episodes.
+
+        `pattern` options are:
+
+        - 0 = Normal display
+        - 1 = Repeat blink display with normal and Blank display
+        - 2 = Repeat blink display with normal and Reverse display
+
+        :param pattern: The blinking pattern to be applied.
+        :type pattern: int
+        :param normal_time: The duration for which the display remains visible in the normal state.
+        :type normal_time: int
+        :param blink_time: The duration for which the display remains visible in the blinking/blank state.
+        :type blink_time: int
+        :param repetition: The number of repetitions for the blinking sequence before returning to normal.
+        :type repetition: int
+        :return: None
+        :raises ValueError: If any of the arguments fall outside their respective allowed ranges.
+        """
+        if not (0 <= pattern <= 2):
+            raise ValueError("Pattern needs to be 0 through 2")
+
+        if not (1 <= normal_time <= 255):
+            raise ValueError("Normal time needs to be 1 through 255")
+
+        if not (1 <= blink_time <= 255):
+            raise ValueError("Blink time needs to be 1 through 255")
+
+        if not (1 <= repetition <= 255):
+            raise ValueError("Repetition needs to be 1 through 255")
+
+        self.send_byte([0x1F, 0x28, 0x61, 0x11, pattern, normal_time, blink_time, repetition])
 
     def do_home(self) -> None:
         """
@@ -478,11 +545,13 @@ class NAGP1250:
         """
         Sets the screen saver mode.
 
-        0 = Turns off module’s internal switching power supply.
-        1 = Turns on module’s internal switching power supply.
-        2 = Turns all display dots off (Display Memory is not affected).
-        3 = Turns on all display dots (Display Memory is not affected).
-        4 = Alternates between all dots on and reverse video display patterns every 2 seconds.
+        `pattern` options are:
+
+        - 0 = Turns off module’s internal switching power supply.
+        - 1 = Turns on module’s internal switching power supply.
+        - 2 = Turns all display dots off (Display Memory is not affected).
+        - 3 = Turns on all display dots (Display Memory is not affected).
+        - 4 = Alternates between all dots on and reverse video display patterns every 2 seconds.
 
         :param pattern: An integer representing the screen saver pattern. Valid values are from 0 to 4.
         :type pattern: int
@@ -520,10 +589,15 @@ class NAGP1250:
         Defines or deletes a user window (1–4).
 
         :param window_num: The identifier of the user window. Must be an integer between 1 and 4 inclusive.
+        :type window_num: int
         :param x: The x-coordinate of the upper-left corner. Must be an integer between 0 and 279.
+        :type x: int
         :param y: The y-coordinate of the upper-left corner. Must be an integer between 0 and 3.
+        :type y: int
         :param w: The width of the window. Must be an integer between 1 and 280.
+        :type w: int
         :param h: The height of the window. Must be an integer between 1 and 4.
+        :type h: int
         :return: None
         :raises ValueError: If the window number, position coordinates, or size are outside their allowable bounds.
         """
@@ -586,8 +660,10 @@ class NAGP1250:
         """
         Defines Window 0’s size as either 140x32 (base) or 280x32 (extended)
 
-        0 = Base
-        1 = Extended
+        `mode` options are:
+
+        - 0 = Base
+        - 1 = Extended
 
         :param mode: The base window mode. Valid values are 0 or 1.
         :type mode: int

@@ -17,6 +17,8 @@
     * [User-Defined Windows](#user-defined-windows)
     * [User-Defined Windows with Mixed Magnifications](#user-defined-windows-with-mixed-magnifications)
     * [User-Defined Windows with Scrolling](#user-defined-windows-with-scrolling)
+    * [Partial Inversion](#partial-inversion)
+      * [Flashing Inverted / Blinking](#flashing-inverted--blinking)
 * [TODO](#todo)
 * [Thank You <3](#thank-you-3)
 <!-- TOC -->
@@ -246,7 +248,6 @@ vfd.write_text("    Hello, World!")
 
 ![Display with windows and mixed font sizes](_images/display_user_windows_mixed_font.jpg)
 
-
 ### User-Defined Windows with Mixed Magnifications
 
 ```python
@@ -290,6 +291,43 @@ vfd.write_text("Hello, World! Hello, World! Hello, World! Hello, World!")
 ```
 
 ![Display with windows and window scrolling](_images/display_user_window_scrolling.jpg)
+
+### Partial Inversion
+
+```python
+from futaba import NAGP1250
+
+vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+
+vfd.define_user_window(window_num=1, x=0, y=0, w=140, h=2)
+vfd.define_user_window(window_num=2, x=0, y=2, w=140, h=2)
+
+vfd.do_select_window(window_num=1)
+vfd.set_reverse_display(mode=1)
+vfd.set_font_magnification(h=2, v=2)
+vfd.write_text("Hello")
+
+vfd.do_select_window(window_num=2)
+vfd.set_reverse_display(mode=0)
+vfd.set_font_magnification(h=1, v=2)
+vfd.write_text("Hello, World!")
+```
+
+![Display with partial inversion](_images/display_set_reverse.jpg)
+
+#### Flashing Inverted / Blinking
+
+```python
+from futaba import NAGP1250
+
+vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+vfd.write_text(text="Hello, World!")
+
+# `pattern=1` for blinking
+vfd.do_blink_display(pattern=2, normal_time=100, blink_time=100, repetition=100)
+```
+
+**SEIZURE WARNING:** It is possible to make this screen blink at a rate that could trigger photosensitive epileptic episodes.
 
 # TODO
 
