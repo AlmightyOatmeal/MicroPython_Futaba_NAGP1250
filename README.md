@@ -1,5 +1,5 @@
 <!-- TOC -->
-* [MicroPython Futuba NAGP1250 VFD display driver](#micropython-futuba-nagp1250-vfd-display-driver)
+* [MicroPython Futaba NAGP1250 VFD display driver](#micropython-futaba-nagp1250-vfd-display-driver)
   * [Datasheets](#datasheets)
   * [Display Configuration](#display-configuration)
     * [Jumpers](#jumpers)
@@ -21,7 +21,7 @@
 * [Thank You <3](#thank-you-3)
 <!-- TOC -->
 
-# MicroPython Futuba NAGP1250 VFD display driver
+# MicroPython Futaba NAGP1250 VFD display driver
 
 **Built on MicroPython 1.25.0.**
 
@@ -44,7 +44,7 @@ For my example, I'm using the synchronous serial interface which needs only JP2 
 
 CN2 pin 1 is located at the far right when looking at the back, which is indicated by a mark right by the CN2 label.
 
-[![Futuba Display Back](_images/display-marked.jpg)](_images/display-marked.jpg)
+[![Futaba Display Back](_images/display-marked.jpg)](_images/display-marked.jpg)
 
 ### Jumpers
 
@@ -84,7 +84,7 @@ The maximum SCK frequency is 2.45mhz; my MCU has a theoretical SCK speed of 44mh
 
 ```python
 import time
-from futuba import NAGP1250
+from futaba import NAGP1250
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 
@@ -119,7 +119,7 @@ This MCU does use 3.3v logic, so a level shifter is needed; I used a simple 4-ch
 
 Remember to load MicroPython on your MCU! ;-)
 
-[![Futuba Display ESP32 S2 Mini wiring diagram](_images/futuba_esp32_wiring.png)](_images/futuba_esp32_wiring.png)
+[![Futaba Display ESP32 S2 Mini wiring diagram](_images/futaba_esp32_wiring.png)](_images/futaba_esp32_wiring.png)
 
 ## Example Code
 
@@ -128,7 +128,7 @@ I tried to document the code as much as possible while including some key detail
 ### Basic Text
 
 ```python
-from futuba import NAGP1250
+from futaba import NAGP1250
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 n = [chr(i) for i in range(128)]
@@ -142,8 +142,8 @@ vfd.write_text(text=n)
 The datasheets will be delightfully confusing, but this helps test some of the character maps.
 
 ```python
-from futuba import NAGP1250
-from futuba.NAGP1250 import CHAR_CODE_KATAKANA
+from futaba import NAGP1250
+from futaba.NAGP1250 import CHAR_CODE_KATAKANA
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 vfd.set_character_code(code=CHAR_CODE_KATAKANA)
@@ -161,7 +161,7 @@ You can have characters occupy up to two columns and up to two rows to give each
 #### BIG
 
 ```python
-from futuba import NAGP1250
+from futaba import NAGP1250
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 vfd.set_font_magnification(h=2, v=2)
@@ -173,7 +173,7 @@ vfd.write_text(text="Hello, World!")
 #### Horizontal span 2, Vertical span 1
 
 ```python
-from futuba import NAGP1250
+from futaba import NAGP1250
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 vfd.set_font_magnification(h=2, v=1)
@@ -187,7 +187,7 @@ vfd.write_text(text="Hello, World!")
 #### Horizontal span 1, Vertical span 2
 
 ```python
-from futuba import NAGP1250
+from futaba import NAGP1250
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 vfd.set_font_magnification(h=1, v=2)
@@ -201,7 +201,7 @@ vfd.write_text(text="Hello, World!")
 It's a little hard to demonstrate it in still photos, but trust me, it works. ;-)
 
 ```python
-from futuba import NAGP1250
+from futaba import NAGP1250
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 vfd.set_horizontal_scroll()
@@ -216,7 +216,7 @@ vfd.write_text(text="Hello, World!")
 Scroll speed is approximately `S * 14ms per column` and the speed settings range from 1 to 31; 1 seems plenty fast, so maybe I need to slow the clock rate down. 
 
 ```python
-from futuba import NAGP1250
+from futaba import NAGP1250
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 vfd.set_horizontal_scroll()
@@ -230,7 +230,7 @@ It's like the above but much more calm.
 ### User-Defined Windows
 
 ```python
-from futuba import NAGP1250
+from futaba import NAGP1250
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 
@@ -252,7 +252,7 @@ vfd.write_text("    Hello, World!")
 ### User-Defined Windows with Mixed Magnifications
 
 ```python
-from futuba import NAGP1250
+from futaba import NAGP1250
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 
@@ -273,7 +273,7 @@ vfd.write_text("Hello, World!")
 ### User-Defined Windows with Scrolling
 
 ```python
-from futuba import NAGP1250
+from futaba import NAGP1250
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 

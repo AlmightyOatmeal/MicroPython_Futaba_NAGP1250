@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Pure MicroPython driver for the Futuba NAGP1250 VFD.
+Pure MicroPython driver for the Futaba NAGP1250 VFD.
 """
 
 __author__ = "Catlin Kintsugi"
