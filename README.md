@@ -375,12 +375,62 @@ from futaba import NAGP1250
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 
-data = bytearray(b'\x00\x00\x00@\x00\x00\x00\x80\x00\x00\x00 ...')
+data = bytearray(b'\x00\x00\x02\xa0\x00\x00\rP\x00\x00\x12H\x00 ...')
 
-vfd.display_realtime_image(image_data=data, width=57, height=32)
+vfd.display_realtime_image(image_data=data, width=26, height=32)
 ```
 
 ![Display with small pixelated image](_images/display_graphic.jpg)
+
+### Displaying a graphic with text using windows
+
+```python
+from futaba import NAGP1250
+
+vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+
+data = bytearray(b'\x00\x00\x02\xa0\x00\x00\rP\x00\x00\x12H\x00 ...')
+
+vfd.display_realtime_image(image_data=data, width=26, height=32)
+
+vfd.define_user_window(window_num=1, x=30, y=0, w=120, h=2)
+vfd.define_user_window(window_num=2, x=30, y=2, w=120, h=2)
+
+vfd.do_select_window(window_num=1)
+vfd.set_font_magnification(h=2, v=2)
+vfd.write_text("Hello")
+
+vfd.do_select_window(window_num=2)
+vfd.set_font_magnification(h=2, v=2)
+vfd.write_text("World")
+```
+
+![Display with small pixelated image and text](_images/display_graphic_text.jpg)
+
+```python
+from futaba import NAGP1250
+
+vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+
+data = bytearray(b'\x00\x00\x02\xa0\x00\x00\rP\x00\x00\x12H\x00 ...')
+
+vfd.display_realtime_image(image_data=data, width=26, height=32)
+
+vfd.define_user_window(window_num=1, x=30, y=0, w=120, h=2)
+vfd.define_user_window(window_num=2, x=30, y=2, w=120, h=2)
+
+vfd.do_select_window(window_num=1)
+vfd.set_font_magnification(h=2, v=2)
+vfd.write_text("Hello")
+
+vfd.do_select_window(window_num=2)
+vfd.set_font_magnification(h=2, v=2)
+vfd.set_reverse_display(mode=1)
+vfd.write_text("World")
+```
+
+![Display with small pixelated image and text inverted](_images/display_graphic_text_inverted.jpg)
+
 
 ## Graphics
 
