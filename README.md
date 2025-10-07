@@ -1,5 +1,6 @@
 <!-- TOC -->
 * [MicroPython Futaba NAGP1250 VFD display driver](#micropython-futaba-nagp1250-vfd-display-driver)
+  * [OMG WHERE DO I GET ONE?](#omg-where-do-i-get-one)
   * [Datasheets](#datasheets)
   * [Display Configuration](#display-configuration)
     * [Jumpers](#jumpers)
@@ -21,6 +22,7 @@
     * [Alternating Character Inversion](#alternating-character-inversion)
     * [Flashing Inverted / Blinking](#flashing-inverted--blinking)
     * [Displaying a graphic](#displaying-a-graphic)
+    * [Displaying a graphic with text using windows](#displaying-a-graphic-with-text-using-windows)
   * [Graphics](#graphics)
 * [TODO](#todo)
 * [Thank You <3](#thank-you-3)
@@ -35,6 +37,10 @@ This is a relatively quick driver I wrote for the NAGP1250-BA display that I hav
 This is my first driver, so please be gentle with me. :^)
 
 There are some minor differences between the various submodels (AA, AB, BA, BB), and I started writing this driver using features that my display didn't currently support. This driver doesn't differentiate, so if a feature doesn't work correctly, then it's possible the display does not support the feature or the code might need updating.
+
+## OMG WHERE DO I GET ONE?
+
+I got mine from the [Murphy's Surplus](https://murphyjunk.net) [eBay store](https://www.ebay.com/str/murphyjunk). I don't know how long this URL will be valid, but the specific item listing where I got mine from is: [https://www.ebay.com/itm/203833526968](https://www.ebay.com/itm/203833526968)
 
 ## Datasheets
 
