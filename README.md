@@ -19,7 +19,9 @@
     * [User-Defined Windows with Scrolling](#user-defined-windows-with-scrolling)
     * [Partial Inversion](#partial-inversion)
     * [Alternating Character Inversion](#alternating-character-inversion)
-      * [Flashing Inverted / Blinking](#flashing-inverted--blinking)
+    * [Flashing Inverted / Blinking](#flashing-inverted--blinking)
+    * [Displaying a graphic](#displaying-a-graphic)
+  * [Graphics](#graphics)
 * [TODO](#todo)
 * [Thank You <3](#thank-you-3)
 <!-- TOC -->
@@ -350,7 +352,7 @@ for l in "Hello, World!":
 
 ![Display with alternating character inversion](_images/display_reverse_characters.jpg)
 
-#### Flashing Inverted / Blinking
+### Flashing Inverted / Blinking
 
 ```python
 from futaba import NAGP1250
@@ -366,12 +368,91 @@ vfd.do_blink_display(pattern=2, normal_time=100, blink_time=100, repetition=100)
 |----------------------------------------------------------------------------------------------------------|
 | It is possible to make this screen blink at a rate that could trigger photosensitive epileptic episodes. |
 
+### Displaying a graphic
+
+```python
+from futaba import NAGP1250
+
+vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+
+data = bytearray(b'\x00\x00\x00@\x00\x00\x00\x80\x00\x00\x00 ...')
+
+vfd.display_realtime_image(image_data=data, width=57, height=32)
+```
+
+![Display with small pixelated image](_images/display_graphic.jpg)
+
+## Graphics
+
+Images need to be black and white 1-bit per pixel. I wrote a little Python function that leverages Pillow to pack the image and provide the dimensional data to use to send the graphic data to the display. 
+
+> The Graphic Image is written to Display Memory as the Image Data bytes are received starting from
+the current cursor location filling each row of a column of the Graphic Image from top to bottom,
+from the left to the right column. The MSB of Image data represents the upper pixel of each byte in a
+column.
+
+The below code has not been tested with MicroPython's Pillow implementation and was designed as a quick and dirty solution for testing. In my example, I did a lot of photo magic to bring out the outlines, resizing, and level adjusting before running it through the below code.
+
+```python
+from PIL import Image
+
+def pack_image_from_file(filepath: str, target_width: int = 140, target_height: int = 32) -> tuple[bytearray, int, int]:
+    """
+    Load and pack a 128×32 image into column-major bytes for the NAGP1250.
+
+    :param filepath: Path to the image file to be processed.
+    :type filepath: str
+    :param target_width: (optional) Target width of the output image in pixels. (default: 140)
+    :type target_width: int
+    :param target_height: (optional) Target height of the output image in pixels. (default: 32)
+    :type target_height: int
+    :return: A tuple with the packed pixel data as a bytearray and both the width and height of the processed image.
+    :rtype: tuple[bytearray, int, int]
+    """
+    # Load and convert to monochrome
+    img = Image.open(filepath).convert("1")
+
+    img = img.resize((target_width, target_height), Image.NEAREST)
+
+    pixels = img.load()
+    packed = bytearray()
+
+    for x in range(target_width):
+        for byte_row in range(0, target_height, 8):
+            byte = 0
+            for bit in range(8):
+                y = byte_row + bit
+                if pixels[x, y] == 0:  # Black pixel = ON
+                    byte |= (1 << (7 - bit))
+            packed.append(byte)
+
+    return packed, target_width, target_height
+```
+
+Example usage:
+
+```python
+path = 'vectordesign-small.bmp'
+
+packed, width, height = pack_image_from_file(path, target_width=57, target_height=32)
+
+print(f'Image size: {width}x{height}, packed size: {len(packed)} bytes')
+print('packed:')
+print(packed)
+```
+
+```
+>>> Image size: 57x32, packed size: 228 bytes
+>>> packed:
+>>> bytearray(b'\x00\x00\x00@\x00\x00\x00\x80\x00\x00\x00 ...')
+```
+
 # TODO
 
 * [ ] Automatically build code documentation from in-code rST docstrings.
 * [ ] Add support for more commands.
-* [ ] Add support for graphics.
-* [ ] Add additional examples.
+* [x] Add support for graphics.
+* [x] Add additional examples.
 * [ ] Add abstractions for doing cool things.
 * [ ] Add framebuffer support.
 * [ ] Add specific delays in writing data for various speeds of MCU.

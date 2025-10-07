@@ -661,7 +661,7 @@ class NAGP1250:
 
     def define_base_window(self, mode: int) -> None:
         """
-        Defines Window 0’s size as either 140x32 (base) or 280x32 (extended)
+        Defines Window 0’s size as either 140x32 (base) or 140+116 of hidden pixels (extended) to give the full 256x32.
 
         `mode` options are:
 
@@ -678,53 +678,38 @@ class NAGP1250:
 
         self.send_byte([0x1F, 0x28, 0x77, 0x10, mode])
 
-    # IMAGE STUFF, *NOT WORKING*
-    # TODO: Make work lolz
-    def write_image(self, image_data, width, height) -> None:
+    def display_realtime_image(self, image_data, width, height) -> None:
         """
-        Writes image data to the device with specified dimensions.
+        Display a bit image at the current cursor position in real-time.
 
-        This method constructs a command packet header and sends image data in
-        8-byte chunks to a connected device over a communication interface. The
-        image dimensions and data length must conform to the constraints defined
-        within the method.
-
-        :param image_data: The image data to be sent, as a sequence of bytes.
-        :param width: The width of the image in pixels. Must be between 1 and 280.
-        :param height: The height of the image in blocks. Each block represents 8
-                       rows of pixels, and height must be between 1 and 4.
+        :param image_data: The image data to be sent, as a sequence of bytes (column-major).
+        :type image_data: list | bytes | bytearray
+        :param width: The width of the image in pixels (columns are 1 pixel wide).
+        :type width: int
+        :param height: The height of the image that must be divisible of 8 (rows are blocks of 8 pixels high).
+        :type height: int
         :return: None
-        :raises ValueError: If the width is not between 1 and 280.
-        :raises ValueError: If the height is not between 1 and 4.
-        :raises ValueError: If the image_data length does not match the product of
-                            the width and height.
         """
-        if not (1 <= width <= 280):
-            raise ValueError("Width must be between 1 and 280")
-        if not (1 <= height <= 4):
-            raise ValueError("Height must be between 1 and 4")
+        if not (1 <= width <= 256):
+            raise ValueError("Width must be between 1 and 256")
 
-        expected_length = width * height
+        if height % 8 != 0 or not (1 <= height <= 32):
+            raise ValueError("Height must be divisible by 8 and ≤ 32")
+
+        byte_rows = height // 8  # height is represented in number of rows that are 8 pixels high.
+        expected_length = width * byte_rows  # width is represented in columns that are 1 pixel wide.
+
         if len(image_data) != expected_length:
             raise ValueError(f"Expected {expected_length} bytes of image data, got {len(image_data)}")
 
-        # Construct command packet header
-        header = [
-            0x1F,  # Command header
-            0x28,
-            0x66,
-            0x11,
-            width & 0xFF,
-            (width >> 8) & 0xFF,
-            height & 0xFF,
-            (height >> 8) & 0xFF,
-            0x1  # fixed mode
+        payload = [
+            0x1F, 0x28, 0x66, 0x11,  # Command
+            width & 0xFF,  # X low byte
+            (width >> 8) & 0xFF,  # X high byte
+            byte_rows & 0xFF,  # Y low byte
+            (byte_rows >> 8) & 0xFF,  # Y high byte
+            1  # Mode (fixed)
         ]
-        self.send_byte(header)
-        time.sleep_us(100)
+        payload.extend(image_data)
 
-        # Send image data in 8-byte chunks
-        for i in range(0, len(image_data), 8):
-            chunk = image_data[i:i + 8]
-            self.send_byte(chunk)
-            time.sleep_us(100)
+        self.send_byte(payload)

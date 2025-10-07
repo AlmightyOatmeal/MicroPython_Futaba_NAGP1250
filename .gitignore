@@ -177,3 +177,6 @@ vector*
 make.bat
 Makefile
 docs/
+out.png
+edges.png
+bw_outline.png
