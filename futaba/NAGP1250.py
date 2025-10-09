@@ -36,6 +36,32 @@ CHAR_CODE_PC852 = 0x12
 CHAR_CODE_PC858 = 0x13
 
 
+# TODO: test
+def pack_bitmap(bitmap):
+    """
+    Pack a 2D bitmap into column-major bytearray for NAGP1250.
+
+    Returns:
+        bytearray, width, byte_height
+    """
+    height = len(bitmap)
+    width = len(bitmap[0])
+    print(f"height: {height}, width: {width}")
+    byte_height = height // 8
+    packed = bytearray()
+
+    for x in range(width):
+        for byte_row in range(0, height, 8):
+            byte = 0
+            for bit in range(8):
+                y = byte_row + bit
+                if y < height and bitmap[y][x]:
+                    byte |= (1 << (7 - bit))
+            packed.append(byte)
+
+    return packed, width, byte_height
+
+
 # noinspection GrazieInspection
 class NAGP1250:
     def __init__(self,
@@ -209,7 +235,7 @@ class NAGP1250:
         :raises ValueError: Invalid font ID.
         """
         if not (0 <= font_id <= 13):
-            raise ValueError("Invalid font ID")
+            raise ValueError(f"Invalid font ID: {font_id}")
         self.send_byte(data=[0x1B, 0x52, font_id])
 
     def set_character_code(self, code: int) -> None:
@@ -235,7 +261,7 @@ class NAGP1250:
         :raises ValueError: Invalid character code.
         """
         if not (0 <= code <= 13):
-            raise ValueError("Invalid character code")
+            raise ValueError(f"Invalid character code: {code}")
         self.send_byte(data=[0x1B, 0x74, code])
 
     def set_cursor_blink(self, mode: int) -> None:
@@ -248,7 +274,7 @@ class NAGP1250:
         :raises ValueError: Invalid cursor blink mode.
         """
         if not (0 <= mode <= 1):
-            raise ValueError("Cursor blink must be 0–1")
+            raise ValueError(f"Cursor blink {mode} must be 0–1")
         self.send_byte([0x1F, 0x43, mode])
 
     def set_horizontal_scroll_speed(self, speed: int) -> None:
@@ -263,7 +289,7 @@ class NAGP1250:
         :raises ValueError: Invalid speed level.
         """
         if not (0 <= speed <= 31):
-            raise ValueError("Horizontal scroll speed must be 0–31")
+            raise ValueError(f"Horizontal scroll speed {speed} must be 0–31")
         self.send_byte([0x1F, 0x73, speed])
 
     def set_luminance(self, luminance: int) -> None:
@@ -286,7 +312,7 @@ class NAGP1250:
         :raises ValueError: Invalid luminance level.
         """
         if not (1 <= luminance <= 8):
-            raise ValueError("Luminance must be 1–8")
+            raise ValueError(f"Luminance {luminance} must be 1–8")
 
         self.send_byte([0x1F, 0x58, luminance])
 
@@ -354,9 +380,9 @@ class NAGP1250:
         :raises ValueError: If the horizontal or vertical magnification is outside the range 1 to 4.
         """
         if not (1 <= h <= 4):
-            raise ValueError("Font magnification horizontal param must be 1 through 4")
+            raise ValueError(f"Font magnification horizontal param {h} must be 1 through 4")
         if not (1 <= v <= 4):
-            raise ValueError("Font magnification vertical param must be 1 through 4")
+            raise ValueError(f"Font magnification vertical param {v} must be 1 through 4")
 
         self.send_byte([0x1F, 0x28, 0x67, 0x40, h, v])
 
@@ -375,11 +401,11 @@ class NAGP1250:
         :raises ValueError: If the mode is not within the range 0 to 3.
         """
         if not (0 <= mode <= 3):
-            raise ValueError("Mode must be between 0 and 3")
+            raise ValueError(f"Mode {mode} must be between 0 and 3")
 
         self.send_byte([0x1F, 0x28, 0x67, 0x03, mode])
 
-    # TODO: Test
+    # TODO: Verify
     def set_cursor_position(self, x: int, y: int) -> None:
         """
         Sets the cursor position on the display to the specified x and y coordinates.
@@ -392,9 +418,9 @@ class NAGP1250:
         :raises ValueError: If x or y are out of their allowed ranges.
         """
         if not (0 <= x <= 280):
-            raise ValueError("X position out of range")
+            raise ValueError(f"X position {x} out of range")
         if not (0 <= y <= 31):
-            raise ValueError("Y position out of range")
+            raise ValueError(f"Y position {y} out of range")
 
         payload = [
             0x1F,  # Command header
@@ -421,7 +447,7 @@ class NAGP1250:
         :raises ValueError: If the mode is not 0 or 1.
         """
         if not (0 <= mode <= 1):
-            raise ValueError("Mode must be either 0 or 1")
+            raise ValueError(f"Mode {mode} must be either 0 or 1")
 
         self.send_byte([0x1F, 0x72, mode])
 
@@ -471,16 +497,16 @@ class NAGP1250:
         :raises ValueError: If any of the arguments fall outside their respective allowed ranges.
         """
         if not (0 <= pattern <= 2):
-            raise ValueError("Pattern needs to be 0 through 2")
+            raise ValueError(f"Pattern {pattern} needs to be 0 through 2")
 
         if not (1 <= normal_time <= 255):
-            raise ValueError("Normal time needs to be 1 through 255")
+            raise ValueError(f"Normal time {normal_time} needs to be 1 through 255")
 
         if not (1 <= blink_time <= 255):
-            raise ValueError("Blink time needs to be 1 through 255")
+            raise ValueError(f"Blink time {blink_time} needs to be 1 through 255")
 
         if not (1 <= repetition <= 255):
-            raise ValueError("Repetition needs to be 1 through 255")
+            raise ValueError(f"Repetition {repetition} needs to be 1 through 255")
 
         self.send_byte([0x1F, 0x28, 0x61, 0x11, pattern, normal_time, blink_time, repetition])
 
@@ -528,7 +554,7 @@ class NAGP1250:
         :raises ValueError: If the provided duration is not within the allowed range of 0–255.
         """
         if not (0 <= duration <= 255):
-            raise ValueError("Wait duration must be 0–255")
+            raise ValueError(f"Wait duration {duration} must be 0–255")
         self.send_byte([0x1F, 0x28, 0x61, 0x01, duration])
 
     def do_select_window(self, window_num: int) -> None:
@@ -541,7 +567,7 @@ class NAGP1250:
         :raises ValueError: If the provided window number is not in the range 0–4.
         """
         if not (0 <= window_num <= 4):
-            raise ValueError("Window number must be 0–4")
+            raise ValueError(f"Window number {window_num} must be 0–4")
         self.send_byte([0x1F, 0x28, 0x77, 0x01, window_num])
 
     def do_screen_saver(self, pattern: int) -> None:
@@ -562,7 +588,7 @@ class NAGP1250:
         :raises ValueError: Invalid pattern.
         """
         if not (0 <= pattern <= 4):
-            raise ValueError("Screen saver must be 0 through 4")
+            raise ValueError(f"Screen saver {pattern} must be 0 through 4")
         self.send_byte([0x1F, 0x28, 0x61, 0x40, pattern])
 
     def do_carriage_return(self) -> None:
@@ -587,6 +613,7 @@ class NAGP1250:
         for char in text:
             self._write_byte(ord(char))
 
+    # TODO: Test to make sure this behaves as it should
     def define_user_window(self, window_num: int, x: int, y: int, w: int, h: int) -> None:
         """
         Defines or deletes a user window (1–4).
@@ -605,11 +632,11 @@ class NAGP1250:
         :raises ValueError: If the window number, position coordinates, or size are outside their allowable bounds.
         """
         if not (1 <= window_num <= 4):
-            raise ValueError("Window number must be 1–4")
+            raise ValueError(f"Window {window_num} number must be 1–4")
         if not (0 <= x <= 279 or 0 <= y <= 3):
-            raise ValueError("Upper-left corner out of bounds")
+            raise ValueError(f"Upper-left corner {x} out of bounds")
         if not (1 <= w <= 280 or 1 <= h <= 4):
-            raise ValueError("Window size out of bounds")
+            raise ValueError(f"Window size {w} out of bounds")
 
         # Command header
         # noinspection PyListCreation
@@ -651,7 +678,7 @@ class NAGP1250:
         :raises ValueError: Invalid user-defined window number.
         """
         if not (1 <= window_num <= 4):
-            raise ValueError("Window number must be 1–4")
+            raise ValueError(f"Window {window_num} number must be 1–4")
 
         # Check to see if we should clear the window before deleting it.
         if clear:
@@ -674,16 +701,16 @@ class NAGP1250:
         :raises ValueError: If the mode is outside the allowed range (0 to 1).
         """
         if not (0 <= mode <= 1):
-            raise ValueError("Mode must be between 0 and 1")
+            raise ValueError(f"Mode {mode} must be between 0 and 1")
 
         self.send_byte([0x1F, 0x28, 0x77, 0x10, mode])
 
-    def display_realtime_image(self, image_data, width, height) -> None:
+    def display_realtime_image(self, image_data: list | bytearray, width: int, height: int) -> None:
         """
         Display a bit image at the current cursor position in real-time.
 
         :param image_data: The image data to be sent, as a sequence of bytes (column-major).
-        :type image_data: list | bytes | bytearray
+        :type image_data: list | bytearray
         :param width: The width of the image in pixels (columns are 1 pixel wide).
         :type width: int
         :param height: The height of the image that must be divisible of 8 (rows are blocks of 8 pixels high).
@@ -691,10 +718,10 @@ class NAGP1250:
         :return: None
         """
         if not (1 <= width <= 256):
-            raise ValueError("Width must be between 1 and 256")
+            raise ValueError(f"Width {width} must be between 1 and 256")
 
         if height % 8 != 0 or not (1 <= height <= 32):
-            raise ValueError("Height must be divisible by 8 and ≤ 32")
+            raise ValueError(f"Height {height} must be divisible by 8 and ≤ 32")
 
         byte_rows = height // 8  # height is represented in number of rows that are 8 pixels high.
         expected_length = width * byte_rows  # width is represented in columns that are 1 pixel wide.
