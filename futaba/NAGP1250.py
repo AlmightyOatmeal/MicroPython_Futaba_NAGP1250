@@ -6,6 +6,7 @@ Pure MicroPython driver for the Futaba NAGP1250 VFD.
 __author__ = "Catlin Kintsugi"
 
 from machine import Pin
+import math
 import time
 
 
@@ -35,31 +36,10 @@ CHAR_CODE_PC866 = 0x11
 CHAR_CODE_PC852 = 0x12
 CHAR_CODE_PC858 = 0x13
 
-
-# TODO: test
-def pack_bitmap(bitmap):
-    """
-    Pack a 2D bitmap into column-major bytearray for NAGP1250.
-
-    Returns:
-        bytearray, width, byte_height
-    """
-    height = len(bitmap)
-    width = len(bitmap[0])
-    print(f"height: {height}, width: {width}")
-    byte_height = height // 8
-    packed = bytearray()
-
-    for x in range(width):
-        for byte_row in range(0, height, 8):
-            byte = 0
-            for bit in range(8):
-                y = byte_row + bit
-                if y < height and bitmap[y][x]:
-                    byte |= (1 << (7 - bit))
-            packed.append(byte)
-
-    return packed, width, byte_height
+WRITE_MODE_NORMAL = 0
+WRITE_MODE_OR = 1
+WRITE_MODE_AND = 2
+WRITE_MODE_XOR = 3
 
 
 # noinspection GrazieInspection
@@ -277,6 +257,27 @@ class NAGP1250:
             raise ValueError(f"Cursor blink {mode} must be 0–1")
         self.send_byte([0x1F, 0x43, mode])
 
+    def set_write_logic(self, mode: int) -> None:
+        """
+        This three-byte command selects the Write Logic Mode. As character data or graphic data is written, it is
+        logically combined with the data already in the Display Memory.
+
+        `mode` options are:
+
+        - 0 = Normal (overwrites existing data)
+        - 1 = OR (combines new and existing data)
+        - 2 = AND (masks existing data)
+        - 3 = XOR (inverts existing data when new data is 0xFF)
+
+        :param mode: The write logic mode.
+        :type mode: int
+        :return: None
+        :raises ValueError: Invalid write logic mode.
+        """
+        if not (0 <= mode <= 3):
+            raise ValueError(f"Write logic mode {mode} must be 0–3")
+        self.send_byte([0x1F, 0x77, mode])
+
     def set_horizontal_scroll_speed(self, speed: int) -> None:
         """
         Sets the Horizontal Scroll Speed for the MD3 mode.
@@ -405,21 +406,20 @@ class NAGP1250:
 
         self.send_byte([0x1F, 0x28, 0x67, 0x03, mode])
 
-    # TODO: Verify
     def set_cursor_position(self, x: int, y: int) -> None:
         """
-        Sets the cursor position on the display to the specified x and y coordinates.
+        Sets the cursor position on the display to the specified x and y coordinates on a given window.
 
-        :param x: The horizontal position for the cursor. Must be in the range 0-280.
+        :param x: The horizontal position for the cursor. Must be in the range 0-255 (1 pixel per column).
         :type x: int
-        :param y: The vertical position for the cursor. Must be in the range 0-31.
+        :param y: The vertical position for the cursor. Must be in the range 0-3 (8 pixel units per row).
         :type y: int
         :return: None
         :raises ValueError: If x or y are out of their allowed ranges.
         """
-        if not (0 <= x <= 280):
+        if not (0 <= x <= 255):
             raise ValueError(f"X position {x} out of range")
-        if not (0 <= y <= 31):
+        if not (0 <= y <= 3):
             raise ValueError(f"Y position {y} out of range")
 
         payload = [
@@ -705,6 +705,35 @@ class NAGP1250:
 
         self.send_byte([0x1F, 0x28, 0x77, 0x10, mode])
 
+    @staticmethod
+    def pack_bitmap(bitmap: list | tuple[list | tuple[int]], width: int, height: int) -> bytearray:
+        """
+        Pack bitmap into column-major format
+
+        The bitmap list/tuple where each inner list/tuple corresponds to a row in the bitmap, where each element is an
+        integer (either 0 or 1) representing the state of the pixel. Columns are processed sequentially, and the
+        packed data is returned as a bytearray.
+
+        :param bitmap: The list representing the bitmap.
+        :type bitmap: list | tuple[list | tuple[int]]
+        :param width: The width of the bitmap, representing the number of columns.
+        :type width: int
+        :param height: The height of the bitmap, representing the number of rows.
+        :type height: int
+        :return: A bytearray where each byte represents a packed column of the bitmap.
+        :rtype: bytearray
+        """
+        packed = bytearray()
+        for x in range(width):
+            for byte_row in range(0, height, 8):
+                byte = 0
+                for bit in range(8):
+                    y = byte_row + bit
+                    if bitmap[y][x]:
+                        byte |= (1 << (7 - bit))
+                packed.append(byte)
+        return packed
+
     def display_realtime_image(self, image_data: list | bytearray, width: int, height: int) -> None:
         """
         Display a bit image at the current cursor position in real-time.
@@ -740,3 +769,45 @@ class NAGP1250:
         payload.extend(image_data)
 
         self.send_byte(payload)
+
+    def draw_graphic_lines(self, lines: list | tuple[list | tuple[int]], width: int = 140, height: int = 32) -> None:
+        """
+        Draws lines based on [x, y, angle_deg, length] specs and sends the packed image to the display.
+
+        +----------------------------------------------------------------------------------------------------------+
+        | Make sure to set your cursor position before drawing so the display knows where to start.                |
+        +==========================================================================================================+
+
+        This method takes a list of lines, where each line is defined by its starting coordinates, angle (measured
+        counter-clockwise from the positive x-axis), and length (number of pixels). The method computes the pixel
+        representation of the lines in a bitmap and calls `pack_bitmap` to pack the column-major format. Finally, it
+        sends the processed data to the display for rendering.
+
+        :param lines: A list or tuple of lines to be drawn.
+        :type lines: list | tuple[list | tuple[int]]
+        :param width: (optional) The width of the bitmap to draw on. (default: 140)
+        :type width: int
+        :param height: (optional) The height of the bitmap to draw on. (default: 32)
+        :type height: int
+        :return: None
+        """
+        # Create blank bitmap
+        bitmap = [[0 for _ in range(width)] for _ in range(height)]
+
+        # Modify the bitmap for each line:
+        for x0, y0, angle_deg, length in lines:
+            angle_rad = math.radians(angle_deg)
+            deg_x = math.cos(angle_rad)
+            deg_y = -math.sin(angle_rad)  # y-axis is downward
+
+            for i in range(length):
+                x = int(round(x0 + deg_x * i))
+                y = int(round(y0 + deg_y * i))
+                if 0 <= x < width and 0 <= y < height:
+                    bitmap[y][x] = 1
+
+        # Pack the bitmap into column-major format for the display
+        packed = self.pack_bitmap(bitmap, width, height)
+
+        # Send to display
+        self.display_realtime_image(packed, width, height)

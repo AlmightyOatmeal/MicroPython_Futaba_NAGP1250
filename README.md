@@ -23,7 +23,12 @@
     * [Flashing Inverted / Blinking](#flashing-inverted--blinking)
     * [Displaying a graphic](#displaying-a-graphic)
     * [Displaying a graphic with text using windows](#displaying-a-graphic-with-text-using-windows)
+    * [Drawing lines](#drawing-lines)
+    * [Merging multiple graphics with logical mode OR](#merging-multiple-graphics-with-logical-mode-or)
+    * [Merging graphics and text](#merging-graphics-and-text)
+    * [Merging graphics and text LIKE A BOSS](#merging-graphics-and-text-like-a-boss)
   * [Graphics](#graphics)
+    * [Driver `pack_bitmap` static method](#driver-pack_bitmap-static-method)
 * [TODO](#todo)
 * [Thank You <3](#thank-you-3)
 <!-- TOC -->
@@ -437,6 +442,152 @@ vfd.write_text("World")
 
 ![Display with small pixelated image and text inverted](_images/display_graphic_text_inverted.jpg)
 
+### Drawing lines
+
+```python
+from futaba import NAGP1250
+
+vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+
+# Remember to set your cursor position so the display knows where to start drawing.
+vfd.set_cursor_position(x=0, y=0)
+
+# (x, y, angle_deg, length)
+vfd.draw_graphic_lines(lines=[
+    (70, 16, 0, 30),    # Horizontal right
+    (70, 16, 90, 15),   # Up
+    (70, 16, 180, 30),  # Left
+    (70, 16, 270, 15),  # Down
+    (70, 16, 45, 20),   # Diagonal up-right
+    (70, 16, 135, 20),  # Diagonal up-left
+    (70, 16, 315, 20),  # Diagonal down-right
+    (70, 16, 225, 20)   # Diagonal down-left
+], width=140)
+```
+
+![Display with lines](_images/display_graphics_lines.jpg)
+
+### Merging multiple graphics with logical mode OR
+
+There are four modes used to merge new data with data already in memory, this example uses the logical OR mode so two graphics of the same size are displayed.
+
+You can import `WRITE_MODE_OR` to use, or you can use the integer value `1`, I added the variable so it would be more human-readable. :^)
+```python
+WRITE_MODE_NORMAL = 0
+WRITE_MODE_OR = 1
+WRITE_MODE_AND = 2
+WRITE_MODE_XOR = 3
+```
+
+```python
+from futaba import NAGP1250
+from futaba.NAGP1250 import WRITE_MODE_OR
+
+vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+
+vfd.set_write_logic(mode=WRITE_MODE_OR)
+
+# Remember to set your cursor position so the display knows where to start drawing.
+vfd.set_cursor_position(x=0, y=0)
+
+# (x, y, angle_deg, length)
+# Tuples
+vfd.draw_graphic_lines(lines=[
+    (70, 16, 0, 30),  # Horizontal right
+    (70, 16, 90, 15),  # Up
+    (70, 16, 180, 30),  # Left
+    (70, 16, 270, 15),  # Down
+    (70, 16, 45, 20),  # Diagonal up-right
+    (70, 16, 135, 20),  # Diagonal up-left
+    (70, 16, 315, 20),  # Diagonal down-right
+    (70, 16, 225, 20)  # Diagonal down-left
+], width=140)
+
+# (x, y, angle_deg, length)
+# Lists
+vfd.draw_graphic_lines(lines=[
+    [35, 16, 0, 30],  # Horizontal right
+    [35, 16, 90, 15],  # Up
+    [35, 16, 180, 30],  # Left
+    [35, 16, 270, 15],  # Down
+    [35, 16, 45, 20],  # Diagonal up-right
+    [35, 16, 135, 20],  # Diagonal up-left
+    [35, 16, 315, 20],  # Diagonal down-right
+    [35, 16, 225, 20]  # Diagonal down-left
+], width=140)
+```
+
+You can use tuples or lists for the `lines` parameter, whatever fits your design pattern best.
+
+![Display with multiple merged graphics](_images/display_multiple_graphics_logical_or.jpg)
+
+### Merging graphics and text
+
+```python
+from futaba import NAGP1250
+
+vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+
+# Remember to set your cursor position so the display knows where to start drawing.
+vfd.set_cursor_position(x=0, y=0)
+
+vfd.draw_graphic_lines(lines=[
+    (3, 3, 0, 13),      # Top L horizontal
+    (16, 0, 270, 7),    # Top L pipe
+    (50, 0, 270, 7),    # Top R pipe
+    (50, 3, 0, 86),     # Top R horizontal
+
+    (3, 3, 270, 25),    # L vertical
+    (136, 3, 270, 25),  # R vertical
+    
+    (3, 27, 0, 134)     # Bottom horizontal
+], width=140)
+
+# Move the cursor to the first row (0) and the 20th column, in the middle of the vertical pipes
+vfd.set_cursor_position(x=20, y=0)
+
+vfd.write_text("Boxy")
+```
+
+![Display with lines and text](_images/display_lines_text.jpg)
+
+### Merging graphics and text LIKE A BOSS
+
+```python
+from futaba import NAGP1250
+
+vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+
+# Remember to set your cursor position so the display knows where to start drawing.
+vfd.set_cursor_position(x=0, y=0)
+
+vfd.draw_graphic_lines(lines=[
+    (3, 3, 0, 13),      # Top left horizontal
+    (16, 0, 270, 7),    # Top left pipe
+    (50, 0, 270, 7),    # Top right pipe
+    (50, 3, 0, 86),     # Top right horizontal
+
+    (3, 3, 270, 25),    # Left vertical
+    (136, 3, 270, 25),  # Right vertical
+
+    (3, 27, 0, 134)     # Bottom horizontal
+], width=140)
+
+# Move the cursor to the first row (0) and the 20th column, in the middle of the vertical pipes
+vfd.set_cursor_position(x=20, y=0)
+
+vfd.write_text("Boxy")
+
+# Move the cursor to the second row (1) and the 6th column, the beginning of the open area
+vfd.set_cursor_position(x=6, y=1)
+
+# Set the font magnification to 2 rows and 2 columns
+vfd.set_font_magnification(h=2, v=2)
+
+vfd.write_text("Enhanced")
+```
+
+![Display with lines and text LIKE A BOSS](_images/display_lines_text_LIKE_A_BOSS.jpg)
 
 ## Graphics
 
@@ -502,6 +653,10 @@ print(packed)
 >>> packed:
 >>> bytearray(b'\x00\x00\x00@\x00\x00\x00\x80\x00\x00\x00 ...')
 ```
+
+### Driver `pack_bitmap` static method
+
+The driver class now has a `pack_bitmap` static method that can be used to pack your bitmap in the column-major format.
 
 # TODO
 
