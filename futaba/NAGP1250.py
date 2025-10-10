@@ -613,7 +613,6 @@ class NAGP1250:
         for char in text:
             self._write_byte(ord(char))
 
-    # TODO: Test to make sure this behaves as it should
     def define_user_window(self, window_num: int, x: int, y: int, w: int, h: int) -> None:
         """
         Defines or deletes a user window (1–4).
