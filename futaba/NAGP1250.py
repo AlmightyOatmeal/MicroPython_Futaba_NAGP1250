@@ -473,11 +473,11 @@ class NAGP1250:
 
         The time unit is approximately t*14ms.
 
-        +----------------------------------------------------------------------------------------------------------+
-        | **SEIZURE WARNING:**                                                                                     |
-        +==========================================================================================================+
-        | It is possible to make this screen blink at a rate that could trigger photosensitive epileptic episodes. |
-        +----------------------------------------------------------------------------------------------------------+
+        .. list-table::
+         :header-rows: 1
+
+         * - **SEIZURE WARNING:**
+         * - It is possible to make this screen blink at a rate that could trigger photosensitive epileptic episodes.
 
         `pattern` options are:
 
@@ -774,14 +774,18 @@ class NAGP1250:
         """
         Draws lines based on [x, y, angle_deg, length] specs and sends the packed image to the display.
 
-        +----------------------------------------------------------------------------------------------------------+
-        | Make sure to set your cursor position before drawing so the display knows where to start.                |
-        +==========================================================================================================+
+        *Make sure to set your cursor position before drawing so the display knows where to start.*
 
         This method takes a list of lines, where each line is defined by its starting coordinates, angle (measured
         counter-clockwise from the positive x-axis), and length (number of pixels). The method computes the pixel
         representation of the lines in a bitmap and calls `pack_bitmap` to pack the column-major format. Finally, it
         sends the processed data to the display for rendering.
+
+        .. list-table::
+          :header-rows: 1
+
+          * - **IMPORTANT:**
+          * - Degrees is measured counter-clockwise from the positive x-axis. This means 90 degrees from left to right is actually 0 and 180 degrees top to bottom is actually 270.
 
         :param lines: A list or tuple of lines to be drawn.
         :type lines: list | tuple[list | tuple[int]]
@@ -798,7 +802,7 @@ class NAGP1250:
         for x0, y0, angle_deg, length in lines:
             angle_rad = math.radians(angle_deg)
             deg_x = math.cos(angle_rad)
-            deg_y = -math.sin(angle_rad)  # y-axis is downward
+            deg_y = -math.sin(angle_rad)  # negative because y increases downward
 
             for i in range(length):
                 x = int(round(x0 + deg_x * i))

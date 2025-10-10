@@ -589,6 +589,10 @@ vfd.write_text("Enhanced")
 
 ![Display with lines and text LIKE A BOSS](_images/display_lines_text_LIKE_A_BOSS.jpg)
 
+### MORE EXAMPLES
+
+More examples can be found in [EXAMPLES.md](EXAMPLES.md).
+
 ## Graphics
 
 Images need to be black and white 1-bit per pixel. I wrote a little Python function that leverages Pillow to pack the image and provide the dimensional data to use to send the graphic data to the display. 
