@@ -769,7 +769,8 @@ class NAGP1250:
 
         self.send_byte(payload)
 
-    def draw_graphic_lines(self, lines: list | tuple[list | tuple[int]], width: int = 140, height: int = 32) -> None:
+    @staticmethod
+    def draw_graphic_lines(bitmap: list[list[int]], lines: list | tuple[list | tuple[int]], width: int = 140, height: int = 32) -> list[list[int]]:
         """
         Draws lines based on [x, y, angle_deg, length] specs and sends the packed image to the display.
 
@@ -781,11 +782,14 @@ class NAGP1250:
         sends the processed data to the display for rendering.
 
         .. list-table::
+          :param bitmap:
           :header-rows: 1
 
           * - **IMPORTANT:**
           * - Degrees is measured counter-clockwise from the positive x-axis. This means 90 degrees from left to right is actually 0 and 180 degrees top to bottom is actually 270.
 
+        :param bitmap: A 2D list or tuple representing the bitmap to draw on.
+        :type bitmap: list[list[int]]
         :param lines: A list or tuple of lines to be drawn.
         :type lines: list | tuple[list | tuple[int]]
         :param width: (optional) The width of the bitmap to draw on. (default: 140)
@@ -794,9 +798,6 @@ class NAGP1250:
         :type height: int
         :return: None
         """
-        # Create blank bitmap
-        bitmap = [[0 for _ in range(width)] for _ in range(height)]
-
         # Modify the bitmap for each line:
         for x0, y0, angle_deg, length in lines:
             angle_rad = math.radians(angle_deg)
@@ -809,8 +810,4 @@ class NAGP1250:
                 if 0 <= x < width and 0 <= y < height:
                     bitmap[y][x] = 1
 
-        # Pack the bitmap into column-major format for the display
-        packed = self.pack_bitmap(bitmap, width, height)
-
-        # Send to display
-        self.display_realtime_image(packed, width, height)
+        return bitmap

@@ -449,11 +449,16 @@ from futaba import NAGP1250
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 
+# Create blank bitmap
+width = 140
+height = 32
+bitmap = [[0 for _ in range(width)] for _ in range(height)]
+
 # Remember to set your cursor position so the display knows where to start drawing.
 vfd.set_cursor_position(x=0, y=0)
 
 # (x, y, angle_deg, length)
-vfd.draw_graphic_lines(lines=[
+bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[
     (70, 16, 0, 30),    # Horizontal right
     (70, 16, 90, 15),   # Up
     (70, 16, 180, 30),  # Left
@@ -462,7 +467,10 @@ vfd.draw_graphic_lines(lines=[
     (70, 16, 135, 20),  # Diagonal up-left
     (70, 16, 315, 20),  # Diagonal down-right
     (70, 16, 225, 20)   # Diagonal down-left
-], width=140)
+], width=width, height=height)
+
+packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
+vfd.display_realtime_image(image_data=packed, width=width, height=height)
 ```
 
 ![Display with lines](_images/display_graphics_lines.jpg)
@@ -485,6 +493,11 @@ from futaba.NAGP1250 import WRITE_MODE_OR
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 
+# Create blank bitmap
+width = 140
+height = 32
+bitmap = [[0 for _ in range(width)] for _ in range(height)]
+
 vfd.set_write_logic(mode=WRITE_MODE_OR)
 
 # Remember to set your cursor position so the display knows where to start drawing.
@@ -492,7 +505,7 @@ vfd.set_cursor_position(x=0, y=0)
 
 # (x, y, angle_deg, length)
 # Tuples
-vfd.draw_graphic_lines(lines=[
+bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[
     (70, 16, 0, 30),  # Horizontal right
     (70, 16, 90, 15),  # Up
     (70, 16, 180, 30),  # Left
@@ -501,11 +514,11 @@ vfd.draw_graphic_lines(lines=[
     (70, 16, 135, 20),  # Diagonal up-left
     (70, 16, 315, 20),  # Diagonal down-right
     (70, 16, 225, 20)  # Diagonal down-left
-], width=140)
+], width=width, height=height)
 
 # (x, y, angle_deg, length)
 # Lists
-vfd.draw_graphic_lines(lines=[
+bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[
     [35, 16, 0, 30],  # Horizontal right
     [35, 16, 90, 15],  # Up
     [35, 16, 180, 30],  # Left
@@ -514,7 +527,10 @@ vfd.draw_graphic_lines(lines=[
     [35, 16, 135, 20],  # Diagonal up-left
     [35, 16, 315, 20],  # Diagonal down-right
     [35, 16, 225, 20]  # Diagonal down-left
-], width=140)
+], width=width, height=height)
+
+packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
+vfd.display_realtime_image(image_data=packed, width=width, height=height)
 ```
 
 You can use tuples or lists for the `lines` parameter, whatever fits your design pattern best.
@@ -528,10 +544,15 @@ from futaba import NAGP1250
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 
+# Create blank bitmap
+width = 140
+height = 32
+bitmap = [[0 for _ in range(width)] for _ in range(height)]
+
 # Remember to set your cursor position so the display knows where to start drawing.
 vfd.set_cursor_position(x=0, y=0)
 
-vfd.draw_graphic_lines(lines=[
+bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[
     (3, 3, 0, 13),      # Top L horizontal
     (16, 0, 270, 7),    # Top L pipe
     (50, 0, 270, 7),    # Top R pipe
@@ -541,7 +562,10 @@ vfd.draw_graphic_lines(lines=[
     (136, 3, 270, 25),  # R vertical
     
     (3, 27, 0, 134)     # Bottom horizontal
-], width=140)
+], width=width, height=height)
+
+packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
+vfd.display_realtime_image(image_data=packed, width=width, height=height)
 
 # Move the cursor to the first row (0) and the 20th column, in the middle of the vertical pipes
 vfd.set_cursor_position(x=20, y=0)
@@ -558,10 +582,15 @@ from futaba import NAGP1250
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 
+# Create blank bitmap
+width = 140
+height = 32
+bitmap = [[0 for _ in range(width)] for _ in range(height)]
+
 # Remember to set your cursor position so the display knows where to start drawing.
 vfd.set_cursor_position(x=0, y=0)
 
-vfd.draw_graphic_lines(lines=[
+bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[
     (3, 3, 0, 13),      # Top left horizontal
     (16, 0, 270, 7),    # Top left pipe
     (50, 0, 270, 7),    # Top right pipe
@@ -571,7 +600,10 @@ vfd.draw_graphic_lines(lines=[
     (136, 3, 270, 25),  # Right vertical
 
     (3, 27, 0, 134)     # Bottom horizontal
-], width=140)
+], width=width, height=height)
+
+packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
+vfd.display_realtime_image(image_data=packed, width=width, height=height)
 
 # Move the cursor to the first row (0) and the 20th column, in the middle of the vertical pipes
 vfd.set_cursor_position(x=20, y=0)
