@@ -164,7 +164,7 @@ If you would like to use 5v logic via a level shifter, please refer to [this dia
 
 ### Example Wiring for a Raspberry Pi Pico
 
-[Futaba Display Raspberry Pi Pico wiring diagram](_images/futaba_pico_wiring_cmos.png)]
+[Futaba Display Raspberry Pi Pico wiring diagram](_images/futaba_pico_wiring_cmos.png)
 
 ## Example Code
 
@@ -781,9 +781,8 @@ The driver class now has a `pack_bitmap` static method that can be used to pack 
 * [x] Add support for graphics.
 * [x] Add additional examples.
 * [ ] Add abstractions for doing cool things.
-* [ ] Add framebuffer support.
-* [ ] Add specific delays in writing data for various speeds of MCU.
 * [ ] Optimize code so it has a smaller footprint.
+* [ ] Analyze code performance to make it faster.
 
 # Thank You <3
 

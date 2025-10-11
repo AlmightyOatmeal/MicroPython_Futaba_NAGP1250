@@ -163,10 +163,11 @@ cython_debug/
 
 # Local development stuff
 .venv/
+.run/
 _etc/
 testing/
 testing*.py
-main.py
+main*
 converter.py
 boot.py
 *.bmp
