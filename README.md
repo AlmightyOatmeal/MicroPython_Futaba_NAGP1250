@@ -26,7 +26,8 @@
     * [Drawing lines](#drawing-lines)
     * [Merging multiple graphics with logical mode OR](#merging-multiple-graphics-with-logical-mode-or)
     * [Merging graphics and text](#merging-graphics-and-text)
-    * [Merging graphics and text LIKE A BOSS](#merging-graphics-and-text-like-a-boss)
+    * [Drawing circles](#drawing-circles)
+    * [MORE EXAMPLES](#more-examples)
   * [Graphics](#graphics)
     * [Driver `pack_bitmap` static method](#driver-pack_bitmap-static-method)
 * [TODO](#todo)
@@ -379,6 +380,44 @@ vfd.do_blink_display(pattern=2, normal_time=100, blink_time=100, repetition=100)
 |----------------------------------------------------------------------------------------------------------|
 | It is possible to make this screen blink at a rate that could trigger photosensitive epileptic episodes. |
 
+### Display Scrolling
+
+This is useful when using the additional 116 pixel hidden/extended resolution to give 256 virtual pixels wide.
+
+```python
+vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+
+# Number of radial elements
+count = 30
+# Length of radial elements
+length = 100
+# Center point for radial elements
+lx = 70
+ly = 16
+
+# Create blank bitmap
+width = 256
+height = 32
+bitmap = [[0 for _ in range(width)] for _ in range(height)]
+
+# Compute angle step (e.g. 360° / 12 = 30° per line)
+step = 360 / count
+
+# Draw each radial line and update the bitmap
+for i in range(count):
+    angle = i * step
+    bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[(lx, ly, angle, length)], width=width, height=height)
+
+packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
+vfd.display_realtime_image(image_data=packed, width=width, height=height)
+
+time.sleep(1)
+
+vfd.do_display_scroll(shift_bytes=4, repeat_count=29, speed=1)
+```
+
+![Display scrolling to the side](_images/display_scroll.gif)
+
 ### Displaying a graphic
 
 ```python
@@ -537,6 +576,38 @@ You can use tuples or lists for the `lines` parameter, whatever fits your design
 
 ![Display with multiple merged graphics](_images/display_multiple_graphics_logical_or.jpg)
 
+### Drawing radial lines
+
+```python
+vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+
+# Number of radial elements
+count = 30
+# Length of radial elements
+length = 100
+# Center point for radial elements
+lx = 70
+ly = 16
+
+# Create blank bitmap
+width = 140
+height = 32
+bitmap = [[0 for _ in range(width)] for _ in range(height)]
+
+# Compute angle step (e.g. 360° / 12 = 30° per line)
+step = 360 / count
+
+# Draw each radial line and update the bitmap
+for i in range(count):
+    angle = i * step
+    bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[(lx, ly, angle, length)], width=width, height=height)
+
+packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
+vfd.display_realtime_image(image_data=packed, width=width, height=height)
+```
+
+![Display with radial lines](_images/display_graphic_lines_radial.jpg)
+
 ### Merging graphics and text
 
 ```python
@@ -575,51 +646,30 @@ vfd.write_text("Boxy")
 
 ![Display with lines and text](_images/display_lines_text.jpg)
 
-### Merging graphics and text LIKE A BOSS
+### Drawing circles
 
 ```python
 from futaba import NAGP1250
 
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
 
-# Create blank bitmap
-width = 140
-height = 32
-bitmap = [[0 for _ in range(width)] for _ in range(height)]
+    # Create blank bitmap
+    width = 140
+    height = 32
+    bitmap = [[0 for _ in range(width)] for _ in range(height)]
 
-# Remember to set your cursor position so the display knows where to start drawing.
-vfd.set_cursor_position(x=0, y=0)
+    # (x, y, radius, filled[boolean])
+    bitmap = vfd.draw_graphic_circles(bitmap=bitmap, circles=[
+        (70, 16, 10, False),   # Center circle
+        (30, 8, 5, False),     # Top-left
+        (110, 24, 7, False)    # Bottom-right
+    ], width=width, height=height)
 
-bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[
-    (3, 3, 0, 13),      # Top left horizontal
-    (16, 0, 270, 7),    # Top left pipe
-    (50, 0, 270, 7),    # Top right pipe
-    (50, 3, 0, 86),     # Top right horizontal
-
-    (3, 3, 270, 25),    # Left vertical
-    (136, 3, 270, 25),  # Right vertical
-
-    (3, 27, 0, 134)     # Bottom horizontal
-], width=width, height=height)
-
-packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
-vfd.display_realtime_image(image_data=packed, width=width, height=height)
-
-# Move the cursor to the first row (0) and the 20th column, in the middle of the vertical pipes
-vfd.set_cursor_position(x=20, y=0)
-
-vfd.write_text("Boxy")
-
-# Move the cursor to the second row (1) and the 6th column, the beginning of the open area
-vfd.set_cursor_position(x=6, y=1)
-
-# Set the font magnification to 2 rows and 2 columns
-vfd.set_font_magnification(h=2, v=2)
-
-vfd.write_text("Enhanced")
+    packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
+    vfd.display_realtime_image(image_data=packed, width=width, height=height)
 ```
 
-![Display with lines and text LIKE A BOSS](_images/display_lines_text_LIKE_A_BOSS.jpg)
+![Display with graphic circles](_images/display_graphic_circles.jpg)
 
 ### MORE EXAMPLES
 

@@ -44,14 +44,9 @@ WRITE_MODE_XOR = 3
 
 # noinspection GrazieInspection
 class NAGP1250:
-    def __init__(self,
-                 sin: Pin | int,
-                 sck: Pin | int,
-                 reset: Pin | int = None,
-                 sbusy: Pin | int = None,
-                 luminance: int = 4,
-                 cursor_blink: int | None = None,
-                 mode: str | None = None) -> None:
+    def __init__(self, sin: Pin | int, sck: Pin | int, reset: Pin | int = None, sbusy: Pin | int = None,
+                 luminance: int = 4, cursor_blink: int | None = None, mode: str | None = None, width: int = 140,
+                 height: int = 32) -> None:
         """
         Initializes the display with specified pins and settings.
 
@@ -69,6 +64,10 @@ class NAGP1250:
         :type cursor_blink: int | None
         :param mode: (optional) Initial mode of the display. Expects "MD1", "MD2", or "MD3". (default: None)
         :type mode: str | None
+        :param width: (optional) Width of the display, specified as an integer. (default: 140).
+        :type width: int
+        :param height: (optional) Height of the display, specified as an integer. (default: 32).
+        :type height: int
 
         :raises ValueError: If the provided mode is invalid.
         """
@@ -77,6 +76,9 @@ class NAGP1250:
         self.pin_sck = Pin(sck, Pin.OUT) if not isinstance(sck, Pin) else sck
         self.pin_reset = Pin(reset, Pin.OUT) if not isinstance(reset, Pin) else reset
         self.pin_sbusy = Pin(sbusy, Pin.IN) if not isinstance(sbusy, Pin) else sbusy
+
+        self.width = width
+        self.height = height
 
         # Set pin initial states
         self.pin_sck.value(0)
@@ -599,6 +601,39 @@ class NAGP1250:
         """
         self._write_byte(0x0D)
 
+    def do_display_scroll(self, shift_bytes: int, repeat_count: int, speed: int = 1) -> None:
+        """
+        Scroll the display using the Scroll Display Action command. This only applies when using the additional
+        hidden/extended 116 pixels for a display resolution of 256px wide.
+
+        :param shift_bytes: The number of bytes (0–1023) to shift in the display.
+        :param repeat_count: The number of times (1–65535) the scrolling action will repeat.
+        :param speed: The speed of scrolling (0–255), where 0 is the slowest and 255 is the fastest.
+        :return: None
+        """
+        if not (0 <= shift_bytes <= 1023):
+            raise ValueError("shift_bytes must be between 0 and 1023")
+        if not (1 <= repeat_count <= 65535):
+            raise ValueError("repeat_count must be between 1 and 65535")
+        if not (0 <= speed <= 255):
+            raise ValueError("speed must be between 0 and 255")
+
+        # Split values into low/high bytes
+        wl = shift_bytes & 0xFF
+        wh = (shift_bytes >> 8) & 0xFF
+        cl = repeat_count & 0xFF
+        ch = (repeat_count >> 8) & 0xFF
+
+        # Construct command packet
+        payload = bytearray([
+            0x1F, 0x28, 0x61, 0x10,  # Command header
+            wl, wh,  # Shift amount
+            cl, ch,  # Repeat count
+            speed  # Speed
+        ])
+
+        self.send_byte(data=payload, wait_busy=True)
+
     def write_text(self, text: str | list) -> None:
         """
         Writes a given string or list of characters to the output.
@@ -770,7 +805,8 @@ class NAGP1250:
         self.send_byte(payload)
 
     @staticmethod
-    def draw_graphic_lines(bitmap: list[list[int]], lines: list | tuple[list | tuple[int]], width: int = 140, height: int = 32) -> list[list[int]]:
+    def draw_graphic_lines(bitmap: list[list[int]], lines: list | tuple[list | tuple[int]], width: int = 140,
+                           height: int = 32) -> list[list[int]]:
         """
         Draws lines based on [x, y, angle_deg, length] specs and sends the packed image to the display.
 
@@ -809,5 +845,160 @@ class NAGP1250:
                 y = int(round(y0 + deg_y * i))
                 if 0 <= x < width and 0 <= y < height:
                     bitmap[y][x] = 1
+
+        return bitmap
+
+    @staticmethod
+    def draw_graphic_circle(bitmap: list[list[int]], cx: int, cy: int, radius: int, width: int = 140,
+                            height: int = 32) -> list[list[int]]:
+        """
+        Draw a circle on a bitmap using the midpoint circle algorithm.
+
+        This method modifies the given bitmap to draw a circle centered at the specified coordinates (x, y) with the
+        specified radius. The algorithm calculates the circle's points for only one octant and uses symmetry to
+        replicate the points across the other octants. The algorithm takes into account the constraints of the
+        display dimensions (width and height) to ensure that the circle does not exceed the bitmap's boundaries.
+
+        :param bitmap: The list representing the bitmap.
+        :type bitmap: list[list[int]]
+        :param cx: Integer coordinate for the x-center of the circle.
+        :type cx: int
+        :param cy: Integer coordinate for the y-center of the circle.
+        :type cy: int
+        :param radius: Radius of the circle, specified as an integer.
+        :type radius: int
+        :param width: (optional) Width of the bitmap, specified as an integer. (default: 140).
+        :type width: int
+        :param height: (optional) Height of the bitmap, specified as an integer. (default: 32).
+        :type height: int
+        :return: A modified 2D list representing the bitmap with the circle drawn on it.
+        :rtype: list[list[int]]
+        """
+        x = radius  # Start at the far right of the circle
+        y = 0  # Start at the top
+        d = 1 - radius  # Decision variable to determine when to step x
+
+        def plot(px, py):
+            # Plot a pixel if it's within display bounds
+            if 0 <= px < width and 0 <= py < height:
+                bitmap[py][px] = 1
+
+        while x >= y:
+            # Plot all 8 symmetrical points around the center
+            plot(cx + x, cy + y)  # Octant 1
+            plot(cx + y, cy + x)  # Octant 2
+            plot(cx - y, cy + x)  # Octant 3
+            plot(cx - x, cy + y)  # Octant 4
+            plot(cx - x, cy - y)  # Octant 5
+            plot(cx - y, cy - x)  # Octant 6
+            plot(cx + y, cy - x)  # Octant 7
+            plot(cx + x, cy - y)  # Octant 8
+
+            y += 1  # Move one step down
+
+            if d < 0:
+                # Midpoint is inside the circle — keep x the same
+                d += 2 * y + 1
+            else:
+                # Midpoint is outside — move x inward
+                x -= 1
+                d += 2 * (y - x) + 1
+
+        return bitmap
+
+    @staticmethod
+    def draw_graphic_circle_filled(bitmap: list[list[int]], cx: int, cy: int, radius: int, width: int = 140,
+                                   height: int = 32) -> list[list[int]]:
+        """
+        Draw a filled circle on a bitmap using the midpoint circle algorithm.
+
+        This method modifies the given bitmap to draw a circle centered at the specified coordinates (x, y) with the
+        specified radius. The algorithm calculates the circle's points for only one octant and uses symmetry to
+        replicate the points across the other octants. The algorithm takes into account the constraints of the
+        display dimensions (width and height) to ensure that the circle does not exceed the bitmap's boundaries.
+
+        :param bitmap: The list representing the bitmap.
+        :type bitmap: list[list[int]]
+        :param cx: Integer coordinate for the x-center of the circle.
+        :type cx: int
+        :param cy: Integer coordinate for the y-center of the circle.
+        :type cy: int
+        :param radius: Radius of the circle, specified as an integer.
+        :type radius: int
+        :param width: (optional) Width of the bitmap, specified as an integer. (default: 140).
+        :type width: int
+        :param height: (optional) Height of the bitmap, specified as an integer. (default: 32).
+        :type height: int
+        :return: A modified 2D list representing the bitmap with the circle drawn on it.
+        :rtype: list[list[int]]
+        """
+        x = radius          # Start at the far right edge of the circle
+        y = 0               # Start at the top
+        d = 1 - radius      # Decision variable for midpoint algorithm
+
+        def draw_span(y_offset: int, x_left: int, x_right: int):
+            """
+            Draws a horizontal span of pixels on a bitmap at a specified vertical offset relative to a central point
+            with defined left and right horizontal lengths.
+
+            :param y_offset: Vertical offset, relative to the center `cy`, where the span should be drawn.
+            :type y_offset: int
+            :param x_left: Number of pixels to extend to the left of the center `cx`.
+            :type x_left: int
+            :param x_right: Number of pixels to extend to the right of the center `cx`.
+            :type x_right: int
+            :return: Nothing. This nested function directly modifies the bitmap from the outer scope.
+            """
+            y_pos = cy + y_offset
+            if 0 <= y_pos < height:  # Check vertical bounds
+                for x_pos in range(cx - x_left, cx + x_right + 1):
+                    if 0 <= x_pos < width:  # Check horizontal bounds
+                        bitmap[y_pos][x_pos] = 1  # Set pixel ON
+
+        # Loop through each vertical slice of the circle
+        while x >= y:
+            # Draw horizontal spans for each symmetrical row
+            draw_span(+y, x, x)  # Top half
+            draw_span(-y, x, x)  # Bottom half
+            draw_span(+x, y, y)  # Right half
+            draw_span(-x, y, y)  # Left half
+
+            y += 1  # Move down one row
+
+            # Update decision variable to determine whether to shrink x
+            if d < 0:
+                d += 2 * y + 1
+            else:
+                x -= 1
+                d += 2 * (y - x) + 1
+
+        return bitmap
+
+    def draw_graphic_circles(self, bitmap: list[list[int]], circles: list | tuple[list | tuple[int]],
+                             width: int = 140, height: int = 32) -> list[list[int]]:
+        """
+        Draws one or more circles on the given bitmap.
+
+        This method iterates through a given list or tuple of circle definitions (each defined by x-coordinate,
+        y-coordinate, and radius) and draws them on the provided bitmap.
+
+        :param bitmap: The list representing the bitmap.
+        :type bitmap: list[list[int]]
+        :param circles: A list or tuple containing the definitions of circles.
+        type circles: list | tuple[list | tuple[int]]
+        :param width: (optional) Width of the bitmap, specified as an integer. (default: 140).
+        :type width: int
+        :param height: (optional) Height of the bitmap, specified as an integer. (default: 32).
+        :type height: int
+        :return: The updated bitmap after drawing the specified circles.
+        :rtype: list[list[int]]
+        """
+        for cx, cy, radius, filled in circles:
+            if not filled:
+                bitmap = self.draw_graphic_circle(bitmap=bitmap, cx=cx, cy=cy, radius=radius, width=width,
+                                                  height=height)
+            else:
+                bitmap = self.draw_graphic_circle_filled(bitmap=bitmap, cx=cx, cy=cy, radius=radius, width=width,
+                                                         height=height)
 
         return bitmap
