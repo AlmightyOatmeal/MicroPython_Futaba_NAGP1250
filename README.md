@@ -1,11 +1,14 @@
 <!-- TOC -->
 * [MicroPython Futaba NAGP1250 VFD display driver](#micropython-futaba-nagp1250-vfd-display-driver)
+  * [Display Features](#display-features)
   * [OMG WHERE DO I GET ONE?](#omg-where-do-i-get-one)
   * [Datasheets](#datasheets)
   * [Display Configuration](#display-configuration)
     * [Jumpers](#jumpers)
     * [Interface](#interface)
-  * [Example Wiring for an ESP32 S2 Mini](#example-wiring-for-an-esp32-s2-mini)
+  * [Example Wiring](#example-wiring)
+    * [Example Wiring for an ESP32 S2 Mini](#example-wiring-for-an-esp32-s2-mini)
+    * [Example Wiring for a Raspberry Pi Pico](#example-wiring-for-a-raspberry-pi-pico)
   * [Example Code](#example-code)
     * [Basic Text](#basic-text)
     * [International Text](#international-text)
@@ -46,6 +49,21 @@ This is my first driver, so please be gentle with me. :^)
 
 There are some minor differences between the various submodels (AA, AB, BA, BB), and I started writing this driver using features that my display didn't currently support. This driver doesn't differentiate, so if a feature doesn't work correctly, then it's possible the display does not support the feature or the code might need updating.
 
+## Display Features
+
+* 140x32 pixels
+  * 116-pixel "hidden"/"extended" area off-screen which gives a virtual 256x32 display area.
+* Built-in font tables so the display can be used as a character display out of the box.
+  * Default font size provides 20 characters wide (normal mode) or 24 characters wide (extended mode) by four rows.
+* Font magnification to span up to four character widths and up to two character rows.
+* Five "windows" that can be independently controlled. 
+  * One base window and Four user-defined windows.
+* Runs off 5v DC power.
+* CMOS (3.3v) or TTL (5v) logic levels. 
+  * (5v may be recommended for longer wire runs due to voltage sag, a level shifter might be required.)
+* Eight brightness levels! (This driver defaults to 50%.)
+* 
+
 ## OMG WHERE DO I GET ONE?
 
 I got mine from the [Murphy's Surplus](https://murphyjunk.net) [eBay store](https://www.ebay.com/str/murphyjunk). I don't know how long this URL will be valid, but the specific item listing where I got mine from is: [https://www.ebay.com/itm/203833526968](https://www.ebay.com/itm/203833526968)
@@ -82,9 +100,11 @@ Mine are configured for synchronous serial with J2 shorted, and that is how I de
 
 ### Interface
 
-Keep in mind the display itself uses 5v logic and some MCU's, like the ESP32 and Raspberry Pi Pico, use 3.3v logic, so a bi-directional level shifter is needed.
+~~Keep in mind the display itself uses 5v logic and some MCU's, like the ESP32 and Raspberry Pi Pico, use 3.3v logic, so a bi-directional level shifter is needed.~~
 
-My Arduino's use 5v logic, so no level shifter is needed, but you should check your MCU specifications/datasheet to make sure you whether you need a level shifter.
+~~My Arduino's use 5v logic, so no level shifter is needed, but you should check your MCU specifications/datasheet to make sure you whether you need a level shifter.~~
+
+This display supports CMOS-level (3.3v) and TTL-level (5v) logic. Using a level shifter is not required but may be beneficial for longer cable runs where there may be voltage sag.
 
 For synchronous serial, four of the six pins are used for communication and control, two of them are +5v and GROUND. Using SBUSY and RESET lines is optional, but I would recommend using them.
 
@@ -128,15 +148,23 @@ print(f"Elapsed time: {elapsed_us} µs")
 print(f"Estimated SCK frequency: {freq:.2f} Hz")
 ```
 
-## Example Wiring for an ESP32 S2 Mini
+## Example Wiring
+
+### Example Wiring for an ESP32 S2 Mini
 
 I used the ESP32 S2 Mini because the dev board because it's pretty but has a built-in voltage regulator. This dev board can be powered from +5v DC through the VBUS-pin, or it can supply +5v DC through the VBUS pin when the dev board is powered via USB.
 
-This MCU does use 3.3v logic, so a level shifter is needed; I used a simple 4-channel bidirectional shifter from HiLetgo. While any level shifter should work, some have different wiring and/or have an enable-pin, so please refer to your level shifter's documentation and wire accordingly.
+~~This MCU does use 3.3v logic, so a level shifter is needed; I used a simple 4-channel bidirectional shifter from HiLetgo. While any level shifter should work, some have different wiring and/or have an enable-pin, so please refer to your level shifter's documentation and wire accordingly.~~
 
 Remember to load MicroPython on your MCU! ;-)
 
-[![Futaba Display ESP32 S2 Mini wiring diagram](_images/futaba_esp32_wiring.png)](_images/futaba_esp32_wiring.png)
+[![Futaba Display ESP32 S2 Mini wiring diagram](_images/futaba_esp32_wiring_cmos.png)](_images/futaba_esp32_wiring_cmos.png)
+
+If you would like to use 5v logic via a level shifter, please refer to [this diagram](_images/futaba_esp32_wiring_ttl.png).
+
+### Example Wiring for a Raspberry Pi Pico
+
+[Futaba Display Raspberry Pi Pico wiring diagram](_images/futaba_pico_wiring_cmos.png)]
 
 ## Example Code
 
@@ -384,7 +412,7 @@ vfd.do_blink_display(pattern=2, normal_time=100, blink_time=100, repetition=100)
 
 ### Display Scrolling
 
-This is useful when using the additional 116 pixel hidden/extended resolution to give 256 virtual pixels wide.
+This is useful when using the additional 116-pixel hidden/extended resolution to give 256 virtual pixels wide.
 
 ```python
 vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
