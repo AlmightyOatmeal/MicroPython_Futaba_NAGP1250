@@ -6,6 +6,8 @@
     * [Merging Graphics, Text, and independent Dynamic Windows](#merging-graphics-text-and-independent-dynamic-windows)
   * [Animated Graphics](#animated-graphics)
     * [Pixel Blocks](#pixel-blocks)
+    * [Pixel Blocks](#pixel-blocks-1)
+    * [Filling in a circle](#filling-in-a-circle)
 <!-- TOC -->
 
 # More Futaba NAGP1250 Examples
