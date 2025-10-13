@@ -5,7 +5,8 @@ Pure MicroPython driver for the Futaba NAGP1250 VFD.
 
 __author__ = "Catlin Kintsugi"
 
-from machine import Pin
+from machine import Pin, SPI
+import micropython
 import math
 import time
 
@@ -41,19 +42,37 @@ WRITE_MODE_OR = 1
 WRITE_MODE_AND = 2
 WRITE_MODE_XOR = 3
 
+BASE_WINDOW_MODE_DEFAULT = 0
+BASE_WINDOW_MODE_EXTENDED = 1
+
+
+# Create a lookup table to reverse the bits of every possible 8-bit value (0–255)
+REVERSE_TABLE = bytearray(256)  # Allocate space for 256 reversed bytes
+
+# Loop through all 8-bit values
+for bit_i in range(256):
+    original_byte = bit_i  # Original byte value
+    result = 0  # Will hold the reversed result
+
+    # Reverse the bits of `original_bytes` by shifting and masking
+    for _ in range(8):  # Process each of the 8 bits
+        result = (result << 1) | (original_byte & 1)  # Shift `result` left and add the least significant bit of `original_bytes`
+        original_byte >>= 1  # Shift `original_bytes` right to move to the next bit
+
+    # Store the reversed byte in the lookup table
+    REVERSE_TABLE[bit_i] = result
+
 
 # noinspection GrazieInspection
 class NAGP1250:
-    def __init__(self, sin: Pin | int, sck: Pin | int, reset: Pin | int = None, sbusy: Pin | int = None,
-                 luminance: int = 4, cursor_blink: int | None = None, mode: str | None = None, width: int = 140,
-                 height: int = 32) -> None:
+    def __init__(self, spi: SPI, reset: Pin | int = None, sbusy: Pin | int = None,
+                 luminance: int = 4, cursor_blink: int | None = None, mode: str | None = None,
+                 base_window_mode: int = 0, debug: bool = False) -> None:
         """
         Initializes the display with specified pins and settings.
 
-        :param sin: Serial pin for communication with the display.
-        :type sin: Pin | int
-        :param sck: Clock pin for communication with the display.
-        :type sck: Pin | int
+        :param spi: Serial peripheral interface object for the display.
+        :type spi: machine.SPI
         :param reset: (optional) Reset pin for the display. (default: None)
         :type reset: Pin | int
         :param sbusy: (optional) Busy signal pin for the display. (default: None)
@@ -64,25 +83,31 @@ class NAGP1250:
         :type cursor_blink: int | None
         :param mode: (optional) Initial mode of the display. Expects "MD1", "MD2", or "MD3". (default: None)
         :type mode: str | None
-        :param width: (optional) Width of the display, specified as an integer. (default: 140).
-        :type width: int
-        :param height: (optional) Height of the display, specified as an integer. (default: 32).
-        :type height: int
-
+        :param base_window_mode: (optional) Base window is 0=140x32 (default) or 1=256x32. (default: 0)
+        :type base_window_mode: int
+        :param debug: (optional) Enable/disable debug mode. (default: False)
+        :type debug: bool
         :raises ValueError: If the provided mode is invalid.
+        :raises ValueError: If the provided base window mode is invalid.
         """
+        self.debug = debug
+
         # Check to see whether we have a pin object or a pin integer
-        self.pin_sin = Pin(sin, Pin.OUT) if not isinstance(sin, Pin) else sin
-        self.pin_sck = Pin(sck, Pin.OUT) if not isinstance(sck, Pin) else sck
-        self.pin_reset = Pin(reset, Pin.OUT) if not isinstance(reset, Pin) else reset
-        self.pin_sbusy = Pin(sbusy, Pin.IN) if not isinstance(sbusy, Pin) else sbusy
+        self.pin_sbusy = Pin(reset, Pin.OUT) if not isinstance(reset, Pin) else reset
+        self.pin_reset = Pin(sbusy, Pin.IN) if not isinstance(sbusy, Pin) else sbusy
 
-        self.width = width
-        self.height = height
+        # Leverage hardware-specific optimizations at a consistent baud rate. This display supports a
+        # maximum baud rate of 115,200.
+        self.spi = spi
 
-        # Set pin initial states
-        self.pin_sck.value(0)
-        self.pin_sin.value(0)
+        if base_window_mode == 0:
+            self.width = 140
+            self.height = 32
+        elif base_window_mode == 1:
+            self.width = 256
+            self.height = 32
+        else:
+            raise ValueError(f"Invalid base window mode: {base_window_mode}")
 
         # Initialize the display
         self.reset_display()
@@ -105,26 +130,6 @@ class NAGP1250:
             else:
                 raise ValueError("Invalid mode")
 
-    def _write_byte(self, byte: int | bytes) -> None:
-        """
-        Writes a single byte to a hardware interface using bit-banging.
-
-        The byte is written the least significant bit (LSB) first. Each bit is successively shifted and sent through the
-        specified data pin (SIN) while clock pulses are generated on the clock pin (SCK).
-
-        :param byte: The byte (as an integer or bytes) to be written bit-by-bit.
-        :type byte: int or bytes
-        :return: None
-        """
-        for i in range(8):  # LSB-first
-            bit = (byte >> i) & 1
-            self.pin_sin.value(bit)
-            time.sleep_us(1)
-            self.pin_sck.value(1)
-            time.sleep_us(1)
-            self.pin_sck.value(0)
-            time.sleep_us(1)
-
     def _wait_for_sbusy(self, timeout_us: int = 10000) -> None:
         """
         Waits for the SBUSY signal to become inactive or until the timeout is reached.
@@ -146,7 +151,8 @@ class NAGP1250:
             time.sleep_us(10)
         return None
 
-    def send_byte(self, data: bytearray | list, wait_busy: bool = True) -> None:
+    @micropython.native
+    def send_bytes(self, data: bytearray | list, wait_busy: bool = True) -> None:
         """
         Sends a sequence of bytes to a specific display and optionally waits
         until the device is no longer busy after sending.
@@ -157,9 +163,29 @@ class NAGP1250:
         :type wait_busy: bool
         :return: None
         """
-        for byte in data:
-            # print(f"Sending byte: 0x{byte:02X} → {byte:08b}")
-            self._write_byte(byte)
+        # MicroPython's SPI implementation doesn't support LSB so we need to pre-flip
+        # the data and handle both 8-bit and 16-bit values.
+
+        out = bytearray()
+
+        for item in data:
+            if item < 0 or item > 0xFFFF:
+                raise ValueError("Data item out of range (must be 0–65535)")
+
+            if item <= 0xFF:
+                # 8-bit value: reverse bits, keep as single byte
+                out.append(REVERSE_TABLE[item])
+            else:
+                # 16-bit value: reverse each byte, preserve 2-byte structure
+                high = (item >> 8) & 0xFF
+                low = item & 0xFF
+                out.append(REVERSE_TABLE[low])  # LSB becomes MSB
+                out.append(REVERSE_TABLE[high])  # MSB becomes LSB
+
+        if self.debug:
+            print(f"Sending {len(out)} bytes: {out}")
+        self.spi.write(out)
+
         if wait_busy and self.pin_sbusy:
             self._wait_for_sbusy()
 
@@ -169,7 +195,7 @@ class NAGP1250:
 
         :return: None
         """
-        self.send_byte(data=[0x1B, 0x40])
+        self.send_bytes(data=[0x1B, 0x40])
 
     def reset_display(self) -> None:
         """
@@ -218,7 +244,7 @@ class NAGP1250:
         """
         if not (0 <= font_id <= 13):
             raise ValueError(f"Invalid font ID: {font_id}")
-        self.send_byte(data=[0x1B, 0x52, font_id])
+        self.send_bytes(data=[0x1B, 0x52, font_id])
 
     def set_character_code(self, code: int) -> None:
         """
@@ -244,7 +270,7 @@ class NAGP1250:
         """
         if not (0 <= code <= 13):
             raise ValueError(f"Invalid character code: {code}")
-        self.send_byte(data=[0x1B, 0x74, code])
+        self.send_bytes(data=[0x1B, 0x74, code])
 
     def set_cursor_blink(self, mode: int) -> None:
         """
@@ -257,7 +283,7 @@ class NAGP1250:
         """
         if not (0 <= mode <= 1):
             raise ValueError(f"Cursor blink {mode} must be 0–1")
-        self.send_byte([0x1F, 0x43, mode])
+        self.send_bytes([0x1F, 0x43, mode])
 
     def set_write_logic(self, mode: int) -> None:
         """
@@ -278,7 +304,7 @@ class NAGP1250:
         """
         if not (0 <= mode <= 3):
             raise ValueError(f"Write logic mode {mode} must be 0–3")
-        self.send_byte([0x1F, 0x77, mode])
+        self.send_bytes([0x1F, 0x77, mode])
 
     def set_horizontal_scroll_speed(self, speed: int) -> None:
         """
@@ -293,7 +319,7 @@ class NAGP1250:
         """
         if not (0 <= speed <= 31):
             raise ValueError(f"Horizontal scroll speed {speed} must be 0–31")
-        self.send_byte([0x1F, 0x73, speed])
+        self.send_bytes([0x1F, 0x73, speed])
 
     def set_luminance(self, luminance: int) -> None:
         """Set display brightness.
@@ -317,7 +343,7 @@ class NAGP1250:
         if not (1 <= luminance <= 8):
             raise ValueError(f"Luminance {luminance} must be 1–8")
 
-        self.send_byte([0x1F, 0x58, luminance])
+        self.send_bytes([0x1F, 0x58, luminance])
 
     def set_overwrite_mode(self) -> None:
         """
@@ -325,7 +351,7 @@ class NAGP1250:
 
         :return: None
         """
-        self.send_byte([0x1F, 0x01])  # MD1: Overwrite mode
+        self.send_bytes([0x1F, 0x01])  # MD1: Overwrite mode
 
     # TODO: Test
     def set_vertical_scroll(self) -> None:
@@ -334,7 +360,7 @@ class NAGP1250:
 
         :return: None
         """
-        self.send_byte([0x1F, 0x02])  # MD2: Vertical scroll mode
+        self.send_bytes([0x1F, 0x02])  # MD2: Vertical scroll mode
 
     def set_horizontal_scroll(self) -> None:
         """
@@ -342,7 +368,7 @@ class NAGP1250:
 
         :return: None
         """
-        self.send_byte([0x1F, 0x03])  # MD3: Horizontal scroll mode
+        self.send_bytes([0x1F, 0x03])  # MD3: Horizontal scroll mode
 
     def set_mode_md1(self) -> None:
         """
@@ -387,7 +413,7 @@ class NAGP1250:
         if not (1 <= v <= 4):
             raise ValueError(f"Font magnification vertical param {v} must be 1 through 4")
 
-        self.send_byte([0x1F, 0x28, 0x67, 0x40, h, v])
+        self.send_bytes([0x1F, 0x28, 0x67, 0x40, h, v])
 
     def set_character_spacing(self, mode: int) -> None:
         """
@@ -406,7 +432,7 @@ class NAGP1250:
         if not (0 <= mode <= 3):
             raise ValueError(f"Mode {mode} must be between 0 and 3")
 
-        self.send_byte([0x1F, 0x28, 0x67, 0x03, mode])
+        self.send_bytes([0x1F, 0x28, 0x67, 0x03, mode])
 
     def set_cursor_position(self, x: int, y: int) -> None:
         """
@@ -432,7 +458,7 @@ class NAGP1250:
             y & 0xFF,  # Y low byte
             (y >> 8) & 0xFF  # Y high byte
         ]
-        self.send_byte(payload)
+        self.send_bytes(payload)
 
     def set_reverse_display(self, mode: int) -> None:
         """
@@ -451,7 +477,7 @@ class NAGP1250:
         if not (0 <= mode <= 1):
             raise ValueError(f"Mode {mode} must be either 0 or 1")
 
-        self.send_byte([0x1F, 0x72, mode])
+        self.send_bytes([0x1F, 0x72, mode])
 
     def clear_window(self, window_num: int = 0) -> None:
         """
@@ -466,7 +492,7 @@ class NAGP1250:
             raise ValueError(f"Invalid window number {window_num}")
 
         self.do_select_window(window_num)
-        self.send_byte([0x0C])
+        self.send_bytes([0x0C])
 
     def do_blink_display(self, pattern: int, normal_time: int, blink_time: int, repetition: int) -> None:
         """
@@ -510,7 +536,7 @@ class NAGP1250:
         if not (1 <= repetition <= 255):
             raise ValueError(f"Repetition {repetition} needs to be 1 through 255")
 
-        self.send_byte([0x1F, 0x28, 0x61, 0x11, pattern, normal_time, blink_time, repetition])
+        self.send_bytes([0x1F, 0x28, 0x61, 0x11, pattern, normal_time, blink_time, repetition])
 
     def do_home(self) -> None:
         """
@@ -518,7 +544,7 @@ class NAGP1250:
 
         :return: None
         """
-        self.send_byte([0x0B])
+        self.send_bytes([0x0B])
 
     def do_line_feed(self) -> None:
         """
@@ -526,7 +552,7 @@ class NAGP1250:
 
         :return: None
         """
-        self.send_byte([0x0A])
+        self.send_bytes([0x0A])
 
     def do_backspace(self) -> None:
         """
@@ -534,7 +560,7 @@ class NAGP1250:
 
         :return: None
         """
-        self.send_byte([0x08])
+        self.send_bytes([0x08])
 
     def do_horizontal_tab(self) -> None:
         """
@@ -542,7 +568,7 @@ class NAGP1250:
 
         :return: None
         """
-        self.send_byte([0x09])
+        self.send_bytes([0x09])
 
     def do_wait(self, duration: int) -> None:
         """
@@ -557,7 +583,7 @@ class NAGP1250:
         """
         if not (0 <= duration <= 255):
             raise ValueError(f"Wait duration {duration} must be 0–255")
-        self.send_byte([0x1F, 0x28, 0x61, 0x01, duration])
+        self.send_bytes([0x1F, 0x28, 0x61, 0x01, duration])
 
     def do_select_window(self, window_num: int) -> None:
         """
@@ -570,7 +596,7 @@ class NAGP1250:
         """
         if not (0 <= window_num <= 4):
             raise ValueError(f"Window number {window_num} must be 0–4")
-        self.send_byte([0x1F, 0x28, 0x77, 0x01, window_num])
+        self.send_bytes([0x1F, 0x28, 0x77, 0x01, window_num])
 
     def do_screen_saver(self, pattern: int) -> None:
         """
@@ -591,7 +617,7 @@ class NAGP1250:
         """
         if not (0 <= pattern <= 4):
             raise ValueError(f"Screen saver {pattern} must be 0 through 4")
-        self.send_byte([0x1F, 0x28, 0x61, 0x40, pattern])
+        self.send_bytes([0x1F, 0x28, 0x61, 0x40, pattern])
 
     def do_carriage_return(self) -> None:
         """
@@ -599,7 +625,7 @@ class NAGP1250:
 
         :return: None
         """
-        self._write_byte(0x0D)
+        self.send_bytes([0x0A])
 
     def do_display_scroll(self, shift_bytes: int, repeat_count: int, speed: int = 1) -> None:
         """
@@ -632,7 +658,7 @@ class NAGP1250:
             speed  # Speed
         ])
 
-        self.send_byte(data=payload, wait_busy=True)
+        self.send_bytes(data=payload, wait_busy=True)
 
     def write_text(self, text: str | list) -> None:
         """
@@ -645,8 +671,7 @@ class NAGP1250:
         :type text: str | list
         :return: None
         """
-        for char in text:
-            self._write_byte(ord(char))
+        self.send_bytes([ord(char) for char in text])
 
     def define_user_window(self, window_num: int, x: int, y: int, w: int, h: int) -> None:
         """
@@ -698,7 +723,7 @@ class NAGP1250:
         payload.append(h & 0xFF)
         payload.append((h >> 8) & 0xFF)
 
-        self.send_byte(payload)
+        self.send_bytes(payload)
 
     def delete_user_window(self, window_num: int, clear: bool = True) -> None:
         """
@@ -718,7 +743,7 @@ class NAGP1250:
         if clear:
             self.clear_window(window_num=window_num)
 
-        self.send_byte([0x1F, 0x28, 0x77, 0x02, window_num, 0x00])
+        self.send_bytes([0x1F, 0x28, 0x77, 0x02, window_num, 0x00])
 
     def define_base_window(self, mode: int) -> None:
         """
@@ -737,9 +762,17 @@ class NAGP1250:
         if not (0 <= mode <= 1):
             raise ValueError(f"Mode {mode} must be between 0 and 1")
 
-        self.send_byte([0x1F, 0x28, 0x77, 0x10, mode])
+        if mode == 0:
+            self.width = 140
+            self.height = 32
+        elif mode == 1:
+            self.width = 256
+            self.height = 32
+
+        self.send_bytes([0x1F, 0x28, 0x77, 0x10, mode])
 
     @staticmethod
+    @micropython.native
     def pack_bitmap(bitmap: list | tuple[list | tuple[int]], width: int, height: int) -> bytearray:
         """
         Pack bitmap into column-major format
@@ -768,6 +801,7 @@ class NAGP1250:
                 packed.append(byte)
         return packed
 
+    @micropython.native
     def display_realtime_image(self, image_data: list | bytearray, width: int, height: int) -> None:
         """
         Display a bit image at the current cursor position in real-time.
@@ -802,7 +836,10 @@ class NAGP1250:
         ]
         payload.extend(image_data)
 
-        self.send_byte(payload)
+        if self.debug:
+            print()
+            print(f"debug: graphics payload: {payload}")
+        self.send_bytes(payload)
 
     @staticmethod
     def draw_graphic_lines(bitmap: list[list[int]], lines: list | tuple[list | tuple[int]], width: int = 140,

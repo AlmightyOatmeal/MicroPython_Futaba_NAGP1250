@@ -17,9 +17,16 @@
 ### Merging graphics and text LIKE A BOSS
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 # Create blank bitmap
 width = 140
@@ -63,7 +70,16 @@ vfd.write_text("Enhanced")
 ### Drawing Circles and Lines
 
 ```python
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+from machine import SPI
+from futaba import NAGP1250
+
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 # Create blank bitmap
 width = 140
@@ -125,9 +141,16 @@ vfd.display_realtime_image(image_data=packed, width=width, height=height)
 ### Merging Graphics, Text, and independent Dynamic Windows
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 # Text to be used at the top
 text = "Fancy Box"
@@ -214,6 +237,7 @@ This is a painfully inefficient way to generate 1x1, 2x2, and 4x4 blocks, but it
 
 ```python
 import random
+from machine import SPI
 from futaba import NAGP1250
 
 
@@ -254,7 +278,13 @@ def generate_block_bitmap(width: int = 140, height: int = 32, block_size: int = 
     return bitmap
 
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 while True:
     random_bytes = generate_block_bitmap(width=width, height=height, block_size=4)
@@ -276,7 +306,16 @@ random_bytes = [[urandom.getrandbits(1) for _ in range(width)] for _ in range(he
 This is a painfully inefficient way to generate 1x1, 2x2, and 4x4 blocks, but it works and totally gives the W.O.P.R. vibes (from the movie War Games).
 
 ```python
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+from machine import SPI
+from futaba import NAGP1250
+
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 # Number of radial elements
 count = 30
@@ -308,7 +347,16 @@ for i in range(count):
 ### Filling in a circle
 
 ```python
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+from machine import SPI
+from futaba import NAGP1250
+
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 # Step degrees
 step_deg = 5
@@ -327,10 +375,10 @@ while True:
     # Draw rotating line
     bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[(cx, cy, angle, 10)], width=width, height=height)
 
-    # Optional: draw center dot or filled circle
-    # bitmap = vfd.draw_graphic_circle_filled(bitmap=bitmap, cx=cx, cy=cy, radius=2)
-
+    # Pack the bitmap and get it ready for display
     packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
+
+    # Send the packed bitmap data to the display
     vfd.display_realtime_image(image_data=packed, width=width, height=height)
 
     # Advance angle
@@ -338,3 +386,5 @@ while True:
 ```
 
 ![Display filling in a circle](_images/display_graphic_circle_filling.gif)
+
+(this gif is slower than the actual example)

@@ -62,7 +62,6 @@ There are some minor differences between the various submodels (AA, AB, BA, BB),
 * CMOS (3.3v) or TTL (5v) logic levels. 
   * (5v may be recommended for longer wire runs due to voltage sag, a level shifter might be required.)
 * Eight brightness levels! (This driver defaults to 50%.)
-* 
 
 ## OMG WHERE DO I GET ONE?
 
@@ -117,37 +116,6 @@ For synchronous serial, four of the six pins are used for communication and cont
 | 5   | SCK          |
 | 6   | /RESET       |
 
-The maximum SCK frequency is 2.45mhz; my MCU has a theoretical SCK speed of 44mhz, so I tried to adjust timings to slow down that speed, but your MCU might be different and timings adjusted. If you would like to test your SCK frequency, you can use this MicroPython code:
-
-```python
-import time
-from futaba import NAGP1250
-
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
-
-pulses = 1000
-
-# Warm-up
-vfd.pin_sck.value(0)
-time.sleep_ms(10)
-
-# Start timing
-start = time.ticks_us()
-for _ in range(pulses):
-    vfd.pin_sck.value(1)
-    time.sleep_us(100)
-    vfd.pin_sck.value(0)
-    time.sleep_us(100)
-end = time.ticks_us()
-
-elapsed_us = time.ticks_diff(end, start)
-freq = pulses / (elapsed_us / 1_000_000)  # Hz
-
-print(f"SCK pulses: {pulses}")
-print(f"Elapsed time: {elapsed_us} µs")
-print(f"Estimated SCK frequency: {freq:.2f} Hz")
-```
-
 ## Example Wiring
 
 ### Example Wiring for an ESP32 S2 Mini
@@ -173,9 +141,16 @@ I tried to document the code as much as possible while including some key detail
 ### Basic Text
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 n = [chr(i) for i in range(128)]
 vfd.write_text(text=n)
 ```
@@ -187,10 +162,17 @@ vfd.write_text(text=n)
 The datasheets will be delightfully confusing, but this helps test some of the character maps.
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 from futaba.NAGP1250 import CHAR_CODE_KATAKANA
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 vfd.set_character_code(code=CHAR_CODE_KATAKANA)
 
 chars = list(range(0x80, 0xFF))
@@ -206,9 +188,16 @@ You can have characters occupy up to two columns and up to two rows to give each
 #### BIG
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 vfd.set_font_magnification(h=2, v=2)
 vfd.write_text(text="Hello, World!")
 ```
@@ -218,9 +207,16 @@ vfd.write_text(text="Hello, World!")
 #### Horizontal span 2, Vertical span 1
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 vfd.set_font_magnification(h=2, v=1)
 vfd.write_text(text="Hello, World!")
 ```
@@ -232,9 +228,16 @@ vfd.write_text(text="Hello, World!")
 #### Horizontal span 1, Vertical span 2
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 vfd.set_font_magnification(h=1, v=2)
 vfd.write_text(text="Hello, World!")
 ```
@@ -246,9 +249,16 @@ vfd.write_text(text="Hello, World!")
 It's a little hard to demonstrate it in still photos, but trust me, it works. ;-)
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 vfd.set_horizontal_scroll()
 vfd.set_font_magnification(h=2, v=2)
 vfd.write_text(text="Hello, World!")
@@ -261,9 +271,16 @@ vfd.write_text(text="Hello, World!")
 Scroll speed is approximately `S * 14ms per column` and the speed settings range from 1 to 31; 1 seems plenty fast, so maybe I need to slow the clock rate down. 
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 vfd.set_horizontal_scroll()
 vfd.set_horizontal_scroll_speed(speed=1)
 vfd.set_font_magnification(h=2, v=2)
@@ -275,9 +292,16 @@ It's like the above but much more calm.
 ### User-Defined Windows
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 vfd.define_user_window(window_num=1, x=0, y=0, w=140, h=3)
 vfd.define_user_window(window_num=2, x=0, y=3, w=140, h=1)
@@ -296,9 +320,16 @@ vfd.write_text("    Hello, World!")
 ### User-Defined Windows with Mixed Magnifications
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 vfd.define_user_window(window_num=1, x=0, y=0, w=140, h=2)
 vfd.define_user_window(window_num=2, x=0, y=2, w=140, h=2)
@@ -317,9 +348,16 @@ vfd.write_text("Hello, World!")
 ### User-Defined Windows with Scrolling
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 vfd.define_user_window(window_num=1, x=0, y=0, w=140, h=3)
 vfd.define_user_window(window_num=2, x=0, y=3, w=140, h=1)
@@ -340,9 +378,16 @@ vfd.write_text("Hello, World! Hello, World! Hello, World! Hello, World!")
 ### Partial Inversion
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 vfd.define_user_window(window_num=1, x=0, y=0, w=140, h=2)
 vfd.define_user_window(window_num=2, x=0, y=2, w=140, h=2)
@@ -363,9 +408,16 @@ vfd.write_text("Hello, World!")
 ### Alternating Character Inversion
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 vfd.define_user_window(window_num=1, x=0, y=0, w=140, h=2)
 vfd.define_user_window(window_num=2, x=0, y=2, w=140, h=2)
@@ -397,9 +449,16 @@ for l in "Hello, World!":
 ### Flashing Inverted / Blinking
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 vfd.write_text(text="Hello, World!")
 
 # `pattern=1` for blinking
@@ -415,7 +474,13 @@ vfd.do_blink_display(pattern=2, normal_time=100, blink_time=100, repetition=100)
 This is useful when using the additional 116-pixel hidden/extended resolution to give 256 virtual pixels wide.
 
 ```python
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 # Number of radial elements
 count = 30
@@ -451,9 +516,16 @@ vfd.do_display_scroll(shift_bytes=4, repeat_count=29, speed=1)
 ### Displaying a graphic
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 data = bytearray(b'\x00\x00\x02\xa0\x00\x00\rP\x00\x00\x12H\x00 ...')
 
@@ -465,9 +537,16 @@ vfd.display_realtime_image(image_data=data, width=26, height=32)
 ### Displaying a graphic with text using windows
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 data = bytearray(b'\x00\x00\x02\xa0\x00\x00\rP\x00\x00\x12H\x00 ...')
 
@@ -488,9 +567,16 @@ vfd.write_text("World")
 ![Display with small pixelated image and text](_images/display_graphic_text.jpg)
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 data = bytearray(b'\x00\x00\x02\xa0\x00\x00\rP\x00\x00\x12H\x00 ...')
 
@@ -514,9 +600,16 @@ vfd.write_text("World")
 ### Drawing lines
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 # Create blank bitmap
 width = 140
@@ -557,10 +650,17 @@ WRITE_MODE_XOR = 3
 ```
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 from futaba.NAGP1250 import WRITE_MODE_OR
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 # Create blank bitmap
 width = 140
@@ -609,7 +709,13 @@ You can use tuples or lists for the `lines` parameter, whatever fits your design
 ### Drawing radial lines
 
 ```python
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 # Number of radial elements
 count = 30
@@ -641,9 +747,16 @@ vfd.display_realtime_image(image_data=packed, width=width, height=height)
 ### Merging graphics and text
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 # Create blank bitmap
 width = 140
@@ -679,9 +792,16 @@ vfd.write_text("Boxy")
 ### Drawing circles
 
 ```python
+from machine import SPI
 from futaba import NAGP1250
 
-vfd = NAGP1250(sin=33, sck=37, reset=39, sbusy=35)
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
     # Create blank bitmap
     width = 140
