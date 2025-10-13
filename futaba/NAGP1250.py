@@ -625,7 +625,7 @@ class NAGP1250:
 
         :return: None
         """
-        self.send_bytes([0x0A])
+        self.send_bytes([0x0D])
 
     def do_display_scroll(self, shift_bytes: int, repeat_count: int, speed: int = 1) -> None:
         """
