@@ -803,20 +803,20 @@ PIN_SBUSY = 35
 spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
 vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
-    # Create blank bitmap
-    width = 140
-    height = 32
-    bitmap = [[0 for _ in range(width)] for _ in range(height)]
+# Create blank bitmap
+width = 140
+height = 32
+bitmap = [[0 for _ in range(width)] for _ in range(height)]
 
-    # (x, y, radius, filled[boolean])
-    bitmap = vfd.draw_graphic_circles(bitmap=bitmap, circles=[
-        (70, 16, 10, False),   # Center circle
-        (30, 8, 5, False),     # Top-left
-        (110, 24, 7, False)    # Bottom-right
-    ], width=width, height=height)
+# (x, y, radius, filled[boolean])
+bitmap = vfd.draw_graphic_circles(bitmap=bitmap, circles=[
+    (70, 16, 10, False),   # Center circle
+    (30, 8, 5, False),     # Top-left
+    (110, 24, 7, False)    # Bottom-right
+], width=width, height=height)
 
-    packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
-    vfd.display_realtime_image(image_data=packed, width=width, height=height)
+packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
+vfd.display_realtime_image(image_data=packed, width=width, height=height)
 ```
 
 ![Display with graphic circles](_images/display_graphic_circles.jpg)
