@@ -93,8 +93,8 @@ class NAGP1250:
         self.debug = debug
 
         # Check to see whether we have a pin object or a pin integer
-        self.pin_sbusy = Pin(reset, Pin.OUT) if not isinstance(reset, Pin) else reset
-        self.pin_reset = Pin(sbusy, Pin.IN) if not isinstance(sbusy, Pin) else sbusy
+        self.pin_reset = Pin(reset, Pin.OUT) if not isinstance(reset, Pin) else reset
+        self.pin_sbusy = Pin(sbusy, Pin.IN) if not isinstance(sbusy, Pin) else sbusy
 
         # Leverage hardware-specific optimizations at a consistent baud rate. This display supports a
         # maximum baud rate of 115,200.
