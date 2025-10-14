@@ -1,5 +1,6 @@
 <!-- TOC -->
 * [MicroPython Futaba NAGP1250 VFD display driver](#micropython-futaba-nagp1250-vfd-display-driver)
+  * [Tested on](#tested-on)
   * [Display Features](#display-features)
   * [OMG WHERE DO I GET ONE?](#omg-where-do-i-get-one)
   * [Datasheets](#datasheets)
@@ -41,13 +42,25 @@
 
 # MicroPython Futaba NAGP1250 VFD display driver
 
-**Built on MicroPython 1.25.0.**
-
 This is a relatively quick driver I wrote for the NAGP1250-BA display that I have using synchronous serial communications based off its datasheet and then supplemented with the correct datasheet lol.
 
 This is my first driver, so please be gentle with me. :^)
 
 There are some minor differences between the various submodels (AA, AB, BA, BB), and I started writing this driver using features that my display didn't currently support. This driver doesn't differentiate, so if a feature doesn't work correctly, then it's possible the display does not support the feature or the code might need updating.
+
+This driver has gone through performance analysis and found that using the SPI interface to provide the best results. I tried to performance tune this driver to the best of my abilities, but there is a lot of Python overhead where a pure C driver may offer better performance for updating graphics. I will try to write a C equivalent in the future. I am trying to add more examples and features when I can, but I am open to hearing feedback or suggestions or requests! :-)
+
+## Tested on
+
+* MicroPython:
+  * Tested on MicroPython 1.25.0
+  * Tested on MicroPython 1.26.0
+  * Tested on MicroPython 1.26.1
+
+* Hardware:
+  * Tested on ESP32 S2 Mini
+  * Tested on Raspberry Pi Pico (non-W)
+
 
 ## Display Features
 
