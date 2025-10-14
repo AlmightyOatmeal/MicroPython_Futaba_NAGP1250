@@ -4,6 +4,7 @@
     * [Merging graphics and text LIKE A BOSS](#merging-graphics-and-text-like-a-boss)
     * [Drawing Circles and Lines](#drawing-circles-and-lines)
     * [Merging Graphics, Text, and independent Dynamic Windows](#merging-graphics-text-and-independent-dynamic-windows)
+    * [ESP32 Wi-Fi Clock](#esp32-wi-fi-clock)
   * [Animated Graphics](#animated-graphics)
     * [Pixel Blocks](#pixel-blocks)
     * [Pixel Blocks](#pixel-blocks-1)
@@ -231,7 +232,7 @@ vfd.write_text("Enhanced")
 
 ### ESP32 Wi-Fi Clock
 
-* Uses the ESP32's built-in WiFi module to connect to a WiFi network.
+* Uses the ESP32's built-in Wi-Fi module to connect to a Wi-Fi network.
   * Leverages [Micropython WifiManager](https://github.com/mitchins/micropython-wifimanager).
 * Synchronizes time with NTP
 * Fetches timezone information from [WorldTimeAPI](https://worldtimeapi.org).
@@ -401,4 +402,4 @@ while True:
 
 ![Display filling in a circle](_images/display_graphic_circle_filling.gif)
 
-(this gif is slower than the actual example)
+(this GIF is slower than the actual example)
