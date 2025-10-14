@@ -5,6 +5,7 @@
     * [Drawing Circles and Lines](#drawing-circles-and-lines)
     * [Merging Graphics, Text, and independent Dynamic Windows](#merging-graphics-text-and-independent-dynamic-windows)
     * [ESP32 Wi-Fi Clock](#esp32-wi-fi-clock)
+    * [ESP32 Wi-Fi Clock with clock face](#esp32-wi-fi-clock-with-clock-face)
   * [Animated Graphics](#animated-graphics)
     * [Pixel Blocks](#pixel-blocks)
     * [Radial lines](#radial-lines)
@@ -39,12 +40,23 @@
   * Leverages [Micropython WifiManager](https://github.com/mitchins/micropython-wifimanager).
 * Synchronizes time with NTP
 * Fetches timezone information from [WorldTimeAPI](https://worldtimeapi.org).
+* Uses user-defined windows so only the portion of the display that needs updating is updated.
 
 This example assumes `wifi_manager.py` and `networks.json` in the root directory of the ESP32 alongside the script.
 
 **CODE**: [EXAMPLES/esp32_wifi_clock.py](EXAMPLES/esp32_wifi_clock.py)
 
 ![Example ESP32 wifi clock](_images/display_example_wifi_clock.jpg)
+
+### ESP32 Wi-Fi Clock with clock face
+
+Similar to the [ESP32 Wi-Fi Clock](#esp32-wi-fi-clock) example, but time-only with a clock face.
+
+There are a couple of helper functions in the example code that can align the hour to the literal hour or move it closer to the next hour as a regular clock would.
+
+**CODE**: [EXAMPLES/esp32_wifi_clock_clockface.py](EXAMPLES/esp32_wifi_clock_clockface.py)
+
+![Example ESP32 wifi clock with clock face](_images/display_example_wifi_clock_clockface.jpg)
 
 ## Animated Graphics
 

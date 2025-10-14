@@ -171,6 +171,82 @@ WifiManager.on_connection_change(my_connection_handler)
 
 
 #
+# Helper Functions
+#
+def modify_angle_ccw_x_axis(angle: float):
+    """
+    Modify an angle in degrees measured counter-clockwise (CCW) from the x-axis.
+
+    Because `draw_graphic_lines()` rotates the input angle counter-clockwise (CCW) from the x-axis, this function
+    adjusts an input angle to align with the counter-clockwise rotation from the x-axis.
+
+    :param angle: Angle in degrees to be modified.
+    :type angle: float
+    :return: The angular position in degrees within 0 to 360 range.
+    :rtype: float
+    """
+    return (90 - angle) % 360
+
+
+def time_position_minutes(minutes: int, align_to_five_minutes: bool = False):
+    """
+    Calculate the angular position on a clock face based on the given time in
+    minutes. Optionally align to the nearest 5-minute mark.
+
+    :param minutes: The number of minutes for which the angular position should be calculated.
+    :type minutes: int
+    :param align_to_five_minutes: (optional) Whether to align the minutes to the nearest 5-minute mark. (default: False)
+    :type align_to_five_minutes: bool
+    :return: The angular position in degrees within 0 to 360 range.
+    :rtype: float
+    """
+    if not align_to_five_minutes:
+        # 360° / 60 minutes = 6° per minute
+        return minutes * 6
+    else:
+        # rounded minutes to the nearest 5-minute mark
+        return (round(minutes / 5) * 5) * 6
+
+
+def time_position_hours(hours: int):
+    """
+    Calculates the angular position on a circular clock face represented in degrees
+    for a given hour. The position is calculated based on the standard 12-hour
+    clock format.
+
+    :param hours: The number of hours for which the angular position should be calculated.
+    :type hours: int
+    :return: The angular position in degrees within 0 to 360 range.
+    :rtype: int
+    """
+    # 360° / 12 hours = 30° per hour
+    return (hours % 12) * 30
+
+
+def time_position_hours_with_minutes(hours: int, minutes: int):
+    """
+    Calculates the angular position of the hour hand on a clock, factoring in both
+    the hour and the contribution of the minutes. The function considers a
+    12-hour clock format where each hour represents 30 degrees. The minutes further
+    adjust the hour hand proportionally.
+
+    :param hours: The hour value on the clock, where valid ranges are between
+        0-11. Can exceed 11, but will be automatically adjusted to fit a 12-hour
+        format.
+    :type hours: int
+    :param minutes: Minutes past the current hour, where valid ranges are
+        between 0-59. The minutes contribute to a fractional movement of the hour
+        hand.
+    :type minutes: int
+    :return: The angular position of the hour hand on the clock in degrees,
+        calculated as a float. The result is a value within the range 0-360.
+    :rtype: float
+    """
+    # Factor in the hour hand change based on minutes
+    return (hours % 12) * 30 + (minutes / 60) * 30
+
+
+#
 # Display Logic
 #
 
@@ -182,13 +258,9 @@ vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 # Set up multiple windows so we only update the portion of the display that needs updating.
 # Time
-vfd.define_user_window(window_num=1, x=0, y=0, w=140, h=2)
-# Day of week
-vfd.define_user_window(window_num=2, x=0, y=2, w=60, h=2)
-# Month
-vfd.define_user_window(window_num=3, x=61, y=2, w=90, h=1)
-# Month day and year
-vfd.define_user_window(window_num=4, x=61, y=3, w=90, h=1)
+vfd.define_user_window(window_num=1, x=0, y=1, w=100, h=2)
+# Clock face
+vfd.define_user_window(window_num=2, x=100, y=0, w=40, h=4)
 
 # Set up an initial "waiting for Wi-Fi" message, then clear once the offset has been updated.
 vfd.clear_window()
@@ -228,32 +300,43 @@ while True:
         if current_t != last_written_t:
             vfd.do_select_window(window_num=1)
             vfd.do_home()
-            vfd.set_font_magnification(h=3, v=2)
+            vfd.set_font_magnification(h=2, v=2)
             vfd.write_text(current_t)
 
             # Update the last written time string variable so the next iteration has something to compare to.
             last_written_t = current_t
 
-        # Same as above but for the date.
-        current_wday = f"{WEEKDAYS[wday]}"
+            # Center point for clock
+            cx = 15
+            cy = 15
 
-        if current_wday != last_written_wday:
+            # Create blank bitmap
+            width = 140
+            height = 32
+            bitmap = [[0 for _ in range(width)] for _ in range(height)]
+
+            # Get the angle positions for the clock hands
+            angle_hours = time_position_hours_with_minutes(hours=hour, minutes=minute)
+            angle_minutes = time_position_minutes(minutes=minute)
+
+            # Draw the clock face
+            bitmap = vfd.draw_graphic_circle(bitmap=bitmap, cx=cx, cy=cy, radius=15)
+
+            # Draw the hands by using `modify_angle_ccw_x_axis()` to make the clock face rotate counter-clockwise
+            # from the x-axis because that is what `draw_graphic_lines()` expects.
+
+            # Draw the hour hand with a length of 8px
+            bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[(cx, cy, modify_angle_ccw_x_axis(angle_hours), 8)],
+                                            width=width, height=height)
+            # Draw the minute hand with a length of 13px
+            bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[(cx, cy, modify_angle_ccw_x_axis(angle_minutes), 13)],
+                                            width=width, height=height)
+
+            # Pack the bitmap and get it ready for display
+            packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
+
+            # Send the packed bitmap to the display window
             vfd.do_select_window(window_num=2)
-            vfd.do_home()
-            vfd.set_font_magnification(h=1, v=2)
-            vfd.write_text(current_wday)
-
-            # update the last written date string
-            last_written_wday = current_wday
-
-            vfd.do_select_window(window_num=3)
-            vfd.do_home()
-            vfd.set_font_magnification(h=1, v=1)
-            vfd.write_text(f"{MONTHS[month-1]}")
-
-            vfd.do_select_window(window_num=4)
-            vfd.do_home()
-            vfd.set_font_magnification(h=1, v=1)
-            vfd.write_text(f"{day}, {year}")
+            vfd.display_realtime_image(image_data=packed, width=width, height=height)
 
     time.sleep(5)
