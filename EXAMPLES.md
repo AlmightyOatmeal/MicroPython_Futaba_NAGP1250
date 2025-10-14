@@ -229,6 +229,20 @@ vfd.write_text("Enhanced")
 
 ![Display with lines, text, and dynamic windows](_images/display_lines_dynamic_windows.jpg)
 
+### ESP32 Wi-Fi Clock
+
+* Uses the ESP32's built-in WiFi module to connect to a WiFi network.
+  * Leverages [Micropython WifiManager](https://github.com/mitchins/micropython-wifimanager).
+* Synchronizes time with NTP
+* Fetches timezone information from [WorldTimeAPI](https://worldtimeapi.org).
+
+This example assumes `wifi_manager.py` and `networks.json` in the root directory of the ESP32 alongside the script.
+
+**CODE**: [EXAMPLES/esp32_wifi_clock.py](EXAMPLES/esp32_wifi_clock.py)
+
+![Example ESP32 wifi clock](_images/display_example_wifi_clock.jpg)
+
+
 ## Animated Graphics
 
 ### Pixel Blocks

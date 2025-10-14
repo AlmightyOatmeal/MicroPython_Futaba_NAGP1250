@@ -181,3 +181,8 @@ docs/
 out.png
 edges.png
 bw_outline.png
+
+# Micropython WiFiManager
+# https://github.com/mitchins/micropython-wifimanager
+wifi_manager.py
+networks.json
