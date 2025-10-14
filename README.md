@@ -61,7 +61,6 @@ This driver has gone through performance analysis and found that using the SPI i
   * Tested on ESP32 S2 Mini
   * Tested on Raspberry Pi Pico (non-W)
 
-
 ## Display Features
 
 * 140x32 pixels
@@ -150,6 +149,8 @@ If you would like to use 5v logic via a level shifter, please refer to [this dia
 ## Example Code
 
 I tried to document the code as much as possible while including some key details from the datasheets. 
+
+**NOTE**: You may have to change the pin configuration and SPI ID to match your hardware. While `SPI(2)` works for the ESP32 S2 Mini, you would have to use `SPI(1)` for the Raspberry Pi Pico and modify the pin configuration.
 
 ### Basic Text
 
