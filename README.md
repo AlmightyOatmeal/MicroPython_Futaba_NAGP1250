@@ -50,6 +50,13 @@ There are some minor differences between the various submodels (AA, AB, BA, BB),
 
 This driver has gone through performance analysis and found that using the SPI interface to provide the best results. I tried to performance tune this driver to the best of my abilities, but there is a lot of Python overhead where a pure C driver may offer better performance for updating graphics. I will try to write a C equivalent in the future. I am trying to add more examples and features when I can, but I am open to hearing feedback or suggestions or requests! :-)
 
+If you like my work and would like to buy me a coffee, please consider donating to
+
+| [Cash App](https://cash.app/$MuffintopBikini)      | [Venmo](https://venmo.com/u/MuffintopBikini)  |
+|----------------------------------------------------|-----------------------------------------------|
+| ![donate via cash app](_images/donate_cashapp.jpg) | ![donate via venmo](_images/donate_venmo.jpg) |
+
+
 ## Tested on
 
 * MicroPython:
@@ -663,58 +670,7 @@ WRITE_MODE_AND = 2
 WRITE_MODE_XOR = 3
 ```
 
-```python
-from machine import SPI
-from futaba import NAGP1250
-from futaba.NAGP1250 import WRITE_MODE_OR
-
-PIN_SIN = 33
-PIN_SCK = 37
-PIN_RESET = 39
-PIN_SBUSY = 35
-
-spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
-vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
-
-# Create blank bitmap
-width = 140
-height = 32
-bitmap = [[0 for _ in range(width)] for _ in range(height)]
-
-vfd.set_write_logic(mode=WRITE_MODE_OR)
-
-# Remember to set your cursor position so the display knows where to start drawing.
-vfd.set_cursor_position(x=0, y=0)
-
-# (x, y, angle_deg, length)
-# Tuples
-bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[
-    (70, 16, 0, 30),  # Horizontal right
-    (70, 16, 90, 15),  # Up
-    (70, 16, 180, 30),  # Left
-    (70, 16, 270, 15),  # Down
-    (70, 16, 45, 20),  # Diagonal up-right
-    (70, 16, 135, 20),  # Diagonal up-left
-    (70, 16, 315, 20),  # Diagonal down-right
-    (70, 16, 225, 20)  # Diagonal down-left
-], width=width, height=height)
-
-# (x, y, angle_deg, length)
-# Lists
-bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[
-    [35, 16, 0, 30],  # Horizontal right
-    [35, 16, 90, 15],  # Up
-    [35, 16, 180, 30],  # Left
-    [35, 16, 270, 15],  # Down
-    [35, 16, 45, 20],  # Diagonal up-right
-    [35, 16, 135, 20],  # Diagonal up-left
-    [35, 16, 315, 20],  # Diagonal down-right
-    [35, 16, 225, 20]  # Diagonal down-left
-], width=width, height=height)
-
-packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
-vfd.display_realtime_image(image_data=packed, width=width, height=height)
-```
+**CODE**: [EXAMPLES/multiple_graphics_logical_or.py](EXAMPLES/multiple_graphics_logical_or.py)
 
 You can use tuples or lists for the `lines` parameter, whatever fits your design pattern best.
 
@@ -760,46 +716,7 @@ vfd.display_realtime_image(image_data=packed, width=width, height=height)
 
 ### Merging graphics and text
 
-```python
-from machine import SPI
-from futaba import NAGP1250
-
-PIN_SIN = 33
-PIN_SCK = 37
-PIN_RESET = 39
-PIN_SBUSY = 35
-
-spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
-vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
-
-# Create blank bitmap
-width = 140
-height = 32
-bitmap = [[0 for _ in range(width)] for _ in range(height)]
-
-# Remember to set your cursor position so the display knows where to start drawing.
-vfd.set_cursor_position(x=0, y=0)
-
-bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[
-    (3, 3, 0, 13),      # Top L horizontal
-    (16, 0, 270, 7),    # Top L pipe
-    (50, 0, 270, 7),    # Top R pipe
-    (50, 3, 0, 86),     # Top R horizontal
-
-    (3, 3, 270, 25),    # L vertical
-    (136, 3, 270, 25),  # R vertical
-    
-    (3, 27, 0, 134)     # Bottom horizontal
-], width=width, height=height)
-
-packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
-vfd.display_realtime_image(image_data=packed, width=width, height=height)
-
-# Move the cursor to the first row (0) and the 20th column, in the middle of the vertical pipes
-vfd.set_cursor_position(x=20, y=0)
-
-vfd.write_text("Boxy")
-```
+**CODE**: [EXAMPLES/graphics_and_text.py](EXAMPLES/graphics_and_text.py)
 
 ![Display with lines and text](_images/display_lines_text.jpg)
 
