@@ -243,7 +243,6 @@ This example assumes `wifi_manager.py` and `networks.json` in the root directory
 
 ![Example ESP32 wifi clock](_images/display_example_wifi_clock.jpg)
 
-
 ## Animated Graphics
 
 ### Pixel Blocks
