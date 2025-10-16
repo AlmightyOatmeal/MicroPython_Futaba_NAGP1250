@@ -7,6 +7,7 @@
     * [ESP32 Wi-Fi Clock](#esp32-wi-fi-clock)
     * [ESP32 Wi-Fi Clock with clock face](#esp32-wi-fi-clock-with-clock-face)
   * [Animated Graphics](#animated-graphics)
+    * [Generating Waveforms](#generating-waveforms)
     * [Pixel Blocks](#pixel-blocks)
     * [Radial lines](#radial-lines)
     * [Filling in a circle](#filling-in-a-circle)
@@ -59,6 +60,19 @@ There are a couple of helper functions in the example code that can align the ho
 ![Example ESP32 wifi clock with clock face](_images/display_example_wifi_clock_clockface.jpg)
 
 ## Animated Graphics
+
+### Generating Waveforms
+
+This features helper classes for each of the waveforms to generate incremental bitmaps. Each waveform is its own user-defined window that can be updated independently.
+
+This is very taxing on the display's processor, so an artificial delay of 3ms is added when writing each waveform bitmap. If you get scrambled data on your display while trying this code, then you may need to increase this artificial delay 
+
+A more efficient approach is to use a single bitmap for all waveforms but defeats what this example is demonstrating. I will try to write a more efficient example and add it later.
+
+**CODE**: [EXAMPLES/animated_waveforms.py](EXAMPLES/animated_waveforms.py)
+
+![Display showing multiple waveforms](_images/display_graphics_waveforms.gif)
+
 
 ### Pixel Blocks
 
