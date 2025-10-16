@@ -337,6 +337,6 @@ while True:
 
             # Send the packed bitmap to the display window
             vfd.do_select_window(window_num=2)
-            vfd.display_realtime_image(image_data=packed, width=width, height=height)
+            vfd.display_graphic_image(image_data=packed, width=width, height=height)
 
     time.sleep(5)

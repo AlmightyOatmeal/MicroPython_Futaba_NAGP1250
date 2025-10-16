@@ -33,7 +33,7 @@ while True:
     packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
 
     # Send the packed bitmap data to the display
-    vfd.display_realtime_image(image_data=packed, width=width, height=height)
+    vfd.display_graphic_image(image_data=packed, width=width, height=height)
 
     # Advance angle
     angle = (angle + step_deg) % 360

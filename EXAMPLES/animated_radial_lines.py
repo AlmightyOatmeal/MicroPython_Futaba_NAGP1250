@@ -34,4 +34,4 @@ for i in range(count):
     bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[(lx, ly, angle, length)], width=width, height=height)
 
     packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
-    vfd.display_realtime_image(image_data=packed, width=width, height=height)
+    vfd.display_graphic_image(image_data=packed, width=width, height=height)

@@ -69,7 +69,7 @@ bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[
 ], width=width, height=height)
 
 packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
-vfd.display_realtime_image(image_data=packed, width=width, height=height)
+vfd.display_graphic_image(image_data=packed, width=width, height=height)
 
 vfd.define_user_window(window_num=1, x=left_indent + 3, y=0, w=empty_width, h=1)
 vfd.define_user_window(window_num=2, x=8, y=1, w=123, h=2)

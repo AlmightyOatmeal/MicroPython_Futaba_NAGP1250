@@ -33,6 +33,7 @@
     * [Drawing radial lines](#drawing-radial-lines)
     * [Merging graphics and text](#merging-graphics-and-text)
     * [Drawing circles](#drawing-circles)
+    * [Drawing boxes](#drawing-boxes)
     * [MORE EXAMPLES](#more-examples)
   * [Graphics](#graphics)
     * [Driver `pack_bitmap` static method](#driver-pack_bitmap-static-method)
@@ -525,7 +526,7 @@ for i in range(count):
     bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[(lx, ly, angle, length)], width=width, height=height)
 
 packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
-vfd.display_realtime_image(image_data=packed, width=width, height=height)
+vfd.display_graphic_image(image_data=packed, width=width, height=height)
 
 time.sleep(1)
 
@@ -550,7 +551,7 @@ vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 data = bytearray(b'\x00\x00\x02\xa0\x00\x00\rP\x00\x00\x12H\x00 ...')
 
-vfd.display_realtime_image(image_data=data, width=26, height=32)
+vfd.display_graphic_image(image_data=data, width=26, height=32)
 ```
 
 ![Display with small pixelated image](_images/display_graphic.jpg)
@@ -571,7 +572,7 @@ vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 data = bytearray(b'\x00\x00\x02\xa0\x00\x00\rP\x00\x00\x12H\x00 ...')
 
-vfd.display_realtime_image(image_data=data, width=26, height=32)
+vfd.display_graphic_image(image_data=data, width=26, height=32)
 
 vfd.define_user_window(window_num=1, x=30, y=0, w=120, h=2)
 vfd.define_user_window(window_num=2, x=30, y=2, w=120, h=2)
@@ -601,7 +602,7 @@ vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
 
 data = bytearray(b'\x00\x00\x02\xa0\x00\x00\rP\x00\x00\x12H\x00 ...')
 
-vfd.display_realtime_image(image_data=data, width=26, height=32)
+vfd.display_graphic_image(image_data=data, width=26, height=32)
 
 vfd.define_user_window(window_num=1, x=30, y=0, w=120, h=2)
 vfd.define_user_window(window_num=2, x=30, y=2, w=120, h=2)
@@ -642,18 +643,18 @@ vfd.set_cursor_position(x=0, y=0)
 
 # (x, y, angle_deg, length)
 bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[
-    (70, 16, 0, 30),    # Horizontal right
-    (70, 16, 90, 15),   # Up
+    (70, 16, 0, 30),  # Horizontal right
+    (70, 16, 90, 15),  # Up
     (70, 16, 180, 30),  # Left
     (70, 16, 270, 15),  # Down
-    (70, 16, 45, 20),   # Diagonal up-right
+    (70, 16, 45, 20),  # Diagonal up-right
     (70, 16, 135, 20),  # Diagonal up-left
     (70, 16, 315, 20),  # Diagonal down-right
-    (70, 16, 225, 20)   # Diagonal down-left
+    (70, 16, 225, 20)  # Diagonal down-left
 ], width=width, height=height)
 
 packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
-vfd.display_realtime_image(image_data=packed, width=width, height=height)
+vfd.display_graphic_image(image_data=packed, width=width, height=height)
 ```
 
 ![Display with lines](_images/display_graphics_lines.jpg)
@@ -709,7 +710,7 @@ for i in range(count):
     bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[(lx, ly, angle, length)], width=width, height=height)
 
 packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
-vfd.display_realtime_image(image_data=packed, width=width, height=height)
+vfd.display_graphic_image(image_data=packed, width=width, height=height)
 ```
 
 ![Display with radial lines](_images/display_graphic_lines_radial.jpg)
@@ -741,16 +742,53 @@ bitmap = [[0 for _ in range(width)] for _ in range(height)]
 
 # (x, y, radius, filled[boolean])
 bitmap = vfd.draw_graphic_circles(bitmap=bitmap, circles=[
-    (70, 16, 10, False),   # Center circle
-    (30, 8, 5, False),     # Top-left
-    (110, 24, 7, False)    # Bottom-right
+    (70, 16, 10, False),  # Center circle
+    (30, 8, 5, False),  # Top-left
+    (110, 24, 7, False)  # Bottom-right
 ], width=width, height=height)
 
 packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
-vfd.display_realtime_image(image_data=packed, width=width, height=height)
+vfd.display_graphic_image(image_data=packed, width=width, height=height)
 ```
 
 ![Display with graphic circles](_images/display_graphic_circles.jpg)
+
+### Drawing boxes
+
+With or without rounded corners.
+
+```python
+from machine import SPI
+from futaba import NAGP1250
+
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
+
+# Create blank bitmap
+width = 140
+height = 32
+bitmap = [[0 for _ in range(width)] for _ in range(height)]
+
+# Display box outline
+bitmap = vfd.draw_graphic_box(bitmap=bitmap, x=0, y=0, width=30, height=10)
+# Display filled-in box
+bitmap = vfd.draw_graphic_box(bitmap=bitmap, x=35, y=0, width=30, height=10, fill=True)
+# Display box with rounded corners
+bitmap = vfd.draw_graphic_box(bitmap=bitmap, x=10, y=15, width=30, height=20, radius=5)
+# Display filled-in box with rounded corners
+bitmap = vfd.draw_graphic_box(bitmap=bitmap, x=55, y=15, width=30, height=20, radius=10, fill=True)
+
+packed = vfd.pack_bitmap(bitmap=bitmap, width=140, height=32)
+
+vfd.display_graphic_image(image_data=packed, width=140, height=32)
+```
+
+![Display with graphic boxes](_images/display_graphic_boxes.jpg)
 
 ### MORE EXAMPLES
 

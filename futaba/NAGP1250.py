@@ -802,7 +802,7 @@ class NAGP1250:
         return packed
 
     @micropython.native
-    def display_realtime_image(self, image_data: list | bytearray, width: int, height: int) -> None:
+    def display_graphic_image(self, image_data: list | bytearray, width: int, height: int) -> None:
         """
         Display a bit image at the current cursor position in real-time.
 
@@ -1037,5 +1037,104 @@ class NAGP1250:
             else:
                 bitmap = self.draw_graphic_circle_filled(bitmap=bitmap, cx=cx, cy=cy, radius=radius, width=width,
                                                          height=height)
+
+        return bitmap
+
+    @staticmethod
+    def draw_graphic_box(bitmap, x, y, width, height, radius=0, fill=False):
+        """
+        Draws a box with quarter-circle rounded corners, tangent-aligned to edges.
+
+        Args:
+            bitmap (list of list of int): 2D pixel array (height x width).
+            x, y (int): Top-left corner of the box.
+            width (int): Width of the box.
+            height (int): Height of the box.
+            radius (int): Radius of the rounded corners.
+            fill (bool): Whether to fill the interior of the box.
+        """
+        bitmap_height = len(bitmap)
+        bitmap_width = len(bitmap[0]) if bitmap_height > 0 else 0
+
+        x0 = max(0, min(x, bitmap_width - 1))
+        x1 = max(0, min(x + width - 1, bitmap_width - 1))
+        y0 = max(0, min(y, bitmap_height - 1))
+        y1 = max(0, min(y + height - 1, bitmap_height - 1))
+        radius = max(1, min(radius, min((x1 - x0) // 2, (y1 - y0) // 2)))
+
+        # Fill interior rectangle (excluding corners)
+        if fill:
+            for yi in range(y0 + radius, y1 - radius + 1):
+                for xi in range(x0 + 1, x1):
+                    bitmap[yi][xi] = 1
+            for yi in range(y0 + 1, y0 + radius):
+                for xi in range(x0 + radius, x1 - radius + 1):
+                    bitmap[yi][xi] = 1
+            for yi in range(y1 - radius + 1, y1):
+                for xi in range(x0 + radius, x1 - radius + 1):
+                    bitmap[yi][xi] = 1
+
+        # Horizontal edges (stop at radius from corners)
+        for xi in range(x0 + radius, x1 - radius + 1):
+            if 0 <= xi < bitmap_width:
+                if 0 <= y0 < bitmap_height:
+                    bitmap[y0][xi] = 1
+                if 0 <= y1 < bitmap_height:
+                    bitmap[y1][xi] = 1
+
+        # Vertical edges (stop at radius from corners)
+        for yi in range(y0 + radius, y1 - radius + 1):
+            if 0 <= yi < bitmap_height:
+                if 0 <= x0 < bitmap_width:
+                    bitmap[yi][x0] = 1
+                if 0 <= x1 < bitmap_width:
+                    bitmap[yi][x1] = 1
+
+        # Quarter-circle corners
+        steps = radius * 2
+        for i in range(steps + 1):
+            theta = (math.pi / 2) * (i / steps)
+            dx = int(round(radius * math.cos(theta)))
+            dy = int(round(radius * math.sin(theta)))
+
+            # Top-left
+            px = x0 + radius - dx
+            py = y0 + radius - dy
+            if 0 <= px < bitmap_width and 0 <= py < bitmap_height:
+                bitmap[py][px] = 1
+            if fill:
+                for fy in range(py + 1, y0 + radius):
+                    if 0 <= fy < bitmap_height:
+                        bitmap[fy][px] = 1
+
+            # Top-right
+            px = x1 - radius + dx
+            py = y0 + radius - dy
+            if 0 <= px < bitmap_width and 0 <= py < bitmap_height:
+                bitmap[py][px] = 1
+            if fill:
+                for fy in range(py + 1, y0 + radius):
+                    if 0 <= fy < bitmap_height:
+                        bitmap[fy][px] = 1
+
+            # Bottom-left
+            px = x0 + radius - dx
+            py = y1 - radius + dy
+            if 0 <= px < bitmap_width and 0 <= py < bitmap_height:
+                bitmap[py][px] = 1
+            if fill:
+                for fy in range(y1 - radius + 1, py):
+                    if 0 <= fy < bitmap_height:
+                        bitmap[fy][px] = 1
+
+            # Bottom-right
+            px = x1 - radius + dx
+            py = y1 - radius + dy
+            if 0 <= px < bitmap_width and 0 <= py < bitmap_height:
+                bitmap[py][px] = 1
+            if fill:
+                for fy in range(y1 - radius + 1, py):
+                    if 0 <= fy < bitmap_height:
+                        bitmap[fy][px] = 1
 
         return bitmap

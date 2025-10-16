@@ -61,7 +61,7 @@ while True:
 
     packed = vfd.pack_bitmap(bitmap=random_bytes, width=width, height=height)
 
-    vfd.display_realtime_image(image_data=packed, width=width, height=height)
+    vfd.display_graphic_image(image_data=packed, width=width, height=height)
 
     if loop >= 5:
         loop = 0

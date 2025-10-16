@@ -33,7 +33,7 @@ bitmap = vfd.draw_graphic_lines(bitmap=bitmap, lines=[
 ], width=width, height=height)
 
 packed = vfd.pack_bitmap(bitmap=bitmap, width=width, height=height)
-vfd.display_realtime_image(image_data=packed, width=width, height=height)
+vfd.display_graphic_image(image_data=packed, width=width, height=height)
 
 # Move the cursor to the first row (0) and the 20th column, in the middle of the vertical pipes
 vfd.set_cursor_position(x=20, y=0)
