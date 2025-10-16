@@ -192,11 +192,16 @@ class TriangleWaveBitmapGenerator:
         """
         Generates a triangle wave waveform with incremental bitmaps that can be used to generate an animation.
 
-        :param width: The width of the object in pixels.
-        :param height: The height of the object in pixels.
-        :param frequency: The frequency of the wave, default value is 2.0.
-        :param amplitude: The amplitude of the wave; if None, it is calculated as (height / 2 - 1).
-        :param thickness: The stroke thickness, default is 1; ensures a minimum value of 1.
+        :param width: The width of the wave bitmap in pixels.
+        :type width: int
+        :param height: The height of the wave bitmap in pixels.
+        :type height: int
+        :param frequency: (optional) The frequency of the wave in cycles per unit width. (default: 2.0)
+        :type frequency: float
+        :param amplitude: (optional) The amplitude of the wave in pixels (defaults: (0.5 * height) - 1)
+        :type amplitude: float
+        :param thickness: (optional) The thickness of the wave line in pixels. (default: 1)
+        :type thickness: int
         """
         self.width = width
         self.height = height
