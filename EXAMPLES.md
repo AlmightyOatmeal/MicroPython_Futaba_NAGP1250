@@ -6,6 +6,8 @@
     * [Merging Graphics, Text, and independent Dynamic Windows](#merging-graphics-text-and-independent-dynamic-windows)
     * [ESP32 Wi-Fi Clock](#esp32-wi-fi-clock)
     * [ESP32 Wi-Fi Clock with clock face](#esp32-wi-fi-clock-with-clock-face)
+    * [ESP32 Wi-Fi Weather](#esp32-wi-fi-weather)
+    * [Mixing text and graphics with beveled boxes in user-defined windows](#mixing-text-and-graphics-with-beveled-boxes-in-user-defined-windows)
   * [Animated Graphics](#animated-graphics)
     * [Generating Waveforms](#generating-waveforms)
     * [Pixel Blocks](#pixel-blocks)
@@ -72,6 +74,12 @@ I downloaded SVGs and converted them to PNGs (in Python using `cairosvg`) and th
 **CODE**: [EXAMPLES/esp32_wifi_weather.py](EXAMPLES/esp32_wifi_weather.py)
 
 ![Example ESP32 wifi displaying weather](_images/esp32_wifi_weather.jpg)
+
+### Mixing text and graphics with beveled boxes in user-defined windows
+
+**CODE**: [EXAMPLES/graphics_text_boxes.py](EXAMPLES/graphics_text_boxes.py)
+
+![Example of advanced beveled text boxes and windows](_images/display_graphics_text.jpg)
 
 ## Animated Graphics
 
