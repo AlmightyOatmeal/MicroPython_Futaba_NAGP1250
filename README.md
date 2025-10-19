@@ -19,6 +19,7 @@
       * [Horizontal span 1, Vertical span 2](#horizontal-span-1-vertical-span-2)
     * [Horizontal Scrolling](#horizontal-scrolling)
     * [Horizontal Scroll Speed](#horizontal-scroll-speed)
+    * [Advanced Scrolling](#advanced-scrolling)
     * [User-Defined Windows](#user-defined-windows)
     * [User-Defined Windows with Mixed Magnifications](#user-defined-windows-with-mixed-magnifications)
     * [User-Defined Windows with Scrolling](#user-defined-windows-with-scrolling)
@@ -310,6 +311,31 @@ vfd.write_text(text="Hello, World!")
 ```
 
 It's like the above but much more calm.
+
+### Advanced Scrolling
+
+```python
+from machine import SPI
+from futaba import NAGP1250
+
+PIN_SIN = 33
+PIN_SCK = 37
+PIN_RESET = 39
+PIN_SBUSY = 35
+
+spi = SPI(2, mosi=PIN_SIN, sck=PIN_SCK, baudrate=115200)
+vfd = NAGP1250(spi=spi, reset=PIN_RESET, sbusy=PIN_SBUSY)
+
+# Enable the additional "hidden" area.
+vfd.define_base_window(mode=1)
+
+vfd.write_text("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+# Shift the display to the right so the hidden area slides into view.
+vfd.do_display_scroll(shift_bytes=8, repeat_count=58, speed=5)
+```
+
+![Display performing advanced horizontal scrolling](_images/display_horizontal_scroll.gif)
 
 ### User-Defined Windows
 
