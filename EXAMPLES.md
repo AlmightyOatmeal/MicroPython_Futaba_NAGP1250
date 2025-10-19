@@ -59,6 +59,20 @@ There are a couple of helper functions in the example code that can align the ho
 
 ![Example ESP32 wifi clock with clock face](_images/display_example_wifi_clock_clockface.jpg)
 
+### ESP32 Wi-Fi Weather
+
+* Uses the ESP32's built-in Wi-Fi module to connect to a Wi-Fi network.
+  * Leverages [Micropython WifiManager](https://github.com/mitchins/micropython-wifimanager).
+* Fetches weather data from [OpenWeatherMap](https://openweathermap.org).
+  * (this service requires a free account to get an API key)
+* Relies on user-provided bitmaps stores as arrays in JSON files in `/weather/32` on the ESP32 filesystem.
+
+I downloaded SVGs and converted them to PNGs (in Python using `cairosvg`) and then resized them to 32px and converted those to bitmap arrays (in Python using `Pillow` and `numpy`) then stored the bitmap arrays in .json files. I copied the .json files do the ESP32 filesystem under `/weather/32` (I created directories for multiple sizes); for example, the icon `forecast-weather-sun-sunny-hot-summer` is stored in `/weather/32/forecast-weather-sun-sunny-hot-summer.json`.
+
+**CODE**: [EXAMPLES/esp32_wifi_weather.py](EXAMPLES/esp32_wifi_weather.py)
+
+![Example ESP32 wifi displaying weather](_images/esp32_wifi_weather.jpg)
+
 ## Animated Graphics
 
 ### Generating Waveforms
