@@ -335,7 +335,15 @@ class NAGP1250:
         """
         Sets the Horizontal Scroll Speed for the MD3 mode.
 
-        Horizontal Scroll Speed is approximately: S * 14ms per column, maximum speed of 31.
+        `speed` options are:
+
+        - 0: move by character
+        - 1: T msec per 2 dots (columns)
+        - 2-31: (n-1) * T msec per dot (column)
+
+        New commands will not execute until the scrolling action ends.
+
+        Scroll base speed “T” depends on the write screen mode and the character size selected.
 
         :param speed: Speed level.
         :type speed: int
@@ -448,10 +456,10 @@ class NAGP1250:
         """
         Sets the character spacing mode.
 
-        0 = Fixed width, space on right
-        1 = Fixed width, space on left and right
-        2 = Proportional width, space on right
-        3 = Proportional width, space on left and right
+        - 0 = Fixed width, space on right
+        - 1 = Fixed width, space on left and right
+        - 2 = Proportional width, space on right
+        - 3 = Proportional width, space on left and right
 
         :param mode: The character spacing mode to set. Must be an integer between 0 and 3, inclusive.
         :type mode: int
@@ -660,6 +668,14 @@ class NAGP1250:
         """
         Scroll the display using the Scroll Display Action command. This only applies when using the additional
         hidden/extended 116 pixels for a display resolution of 256px wide.
+
+        Horizontal scrolling can be performed by specifying the shift byte to a multiple number of (Display screen “y”
+        dot/8).
+
+        Display switching can be performed by specifying the shift byte to (Display screen “x” dot×Display
+        screen “y” dot/8).
+
+        Scroll speed is specified by “s” (s * 14msec/1 shift)
 
         :param shift_bytes: The number of bytes (0–1023) to shift in the display.
         :param repeat_count: The number of times (1–65535) the scrolling action will repeat.
