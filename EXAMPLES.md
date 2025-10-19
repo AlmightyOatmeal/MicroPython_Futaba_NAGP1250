@@ -68,6 +68,7 @@ There are a couple of helper functions in the example code that can align the ho
 * Fetches weather data from [OpenWeatherMap](https://openweathermap.org).
   * (this service requires a free account to get an API key)
 * Relies on user-provided bitmaps stores as arrays in JSON files in `/weather/32` on the ESP32 filesystem.
+  * Please refer to [HELPERS.md](HELPERS.md) for the code I used to convert and generate bitmap JSON.
 
 Please note the API key in the code is _example only_ and will not work. ;-P
 
