@@ -4,6 +4,10 @@ from machine import SPI
 import math
 import time
 
+# Tested on:
+# - MicroPython v1.26.1; LOLIN_S2_MINI
+
+
 # SPI pins for the NAGP1250 display.
 PIN_SIN = 33
 PIN_SCK = 37
