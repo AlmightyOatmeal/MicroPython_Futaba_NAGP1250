@@ -69,6 +69,8 @@ There are a couple of helper functions in the example code that can align the ho
   * (this service requires a free account to get an API key)
 * Relies on user-provided bitmaps stores as arrays in JSON files in `/weather/32` on the ESP32 filesystem.
 
+Please note the API key in the code is _example only_ and will not work. ;-P
+
 I downloaded SVGs and converted them to PNGs (in Python using `cairosvg`) and then resized them to 32px and converted those to bitmap arrays (in Python using `Pillow` and `numpy`) then stored the bitmap arrays in .json files. I copied the .json files do the ESP32 filesystem under `/weather/32` (I created directories for multiple sizes); for example, the icon `forecast-weather-sun-sunny-hot-summer` is stored in `/weather/32/forecast-weather-sun-sunny-hot-summer.json`.
 
 **CODE**: [EXAMPLES/esp32_wifi_weather.py](EXAMPLES/esp32_wifi_weather.py)
