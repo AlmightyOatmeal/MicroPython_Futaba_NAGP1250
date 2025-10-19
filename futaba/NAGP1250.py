@@ -65,6 +65,16 @@ for bit_i in range(256):
 
 # noinspection GrazieInspection
 class NAGP1250:
+    width = 140
+    height = 32
+    mode = "<device default>"
+    luminance = None
+    cursor_blink = None
+    font_id = "<device default>"
+    character_code = "<device default>"
+    base_window_mode = 0
+    debug = False
+
     def __init__(self, spi: SPI, reset: Pin | int = None, sbusy: Pin | int = None,
                  luminance: int = 4, cursor_blink: int | None = None, mode: str | None = None,
                  base_window_mode: int = 0, debug: bool = False) -> None:
@@ -100,14 +110,7 @@ class NAGP1250:
         # maximum baud rate of 115,200.
         self.spi = spi
 
-        if base_window_mode == 0:
-            self.width = 140
-            self.height = 32
-        elif base_window_mode == 1:
-            self.width = 256
-            self.height = 32
-        else:
-            raise ValueError(f"Invalid base window mode: {base_window_mode}")
+        self.define_base_window(mode=base_window_mode)
 
         # Initialize the display
         self.reset_display()
@@ -129,6 +132,27 @@ class NAGP1250:
                 self.set_mode_md3()
             else:
                 raise ValueError("Invalid mode")
+
+    def __repr__(self):
+        """
+        String representation of the object instance.
+
+        :return: String representation of the object instance.
+        :rtype: str
+        """
+        params = [
+            f"spi={self.spi}",
+            f"pin_reset={self.pin_reset}",
+            f"pin_sbusy={self.pin_sbusy}",
+            f"width={self.width}",
+            f"height={self.height}",
+            f"luminance={self.luminance}",
+            f"mode={self.mode}",
+            f"base_window_mode={self.base_window_mode}",
+            f"cursor_blink={self.cursor_blink}",
+            f"debug={self.debug}"
+        ]
+        return f"<NAGP1250({", ".join(params)})>"
 
     def _wait_for_sbusy(self, timeout_us: int = 10000) -> None:
         """
@@ -283,6 +307,7 @@ class NAGP1250:
         """
         if not (0 <= mode <= 1):
             raise ValueError(f"Cursor blink {mode} must be 0–1")
+        self.cursor_blink = mode
         self.send_bytes([0x1F, 0x43, mode])
 
     def set_write_logic(self, mode: int) -> None:
@@ -343,6 +368,7 @@ class NAGP1250:
         if not (1 <= luminance <= 8):
             raise ValueError(f"Luminance {luminance} must be 1–8")
 
+        self.luminance = luminance
         self.send_bytes([0x1F, 0x58, luminance])
 
     def set_overwrite_mode(self) -> None:
@@ -351,6 +377,7 @@ class NAGP1250:
 
         :return: None
         """
+        self.mode = "MD1"
         self.send_bytes([0x1F, 0x01])  # MD1: Overwrite mode
 
     # TODO: Test
@@ -360,6 +387,7 @@ class NAGP1250:
 
         :return: None
         """
+        self.mode = "MD2"
         self.send_bytes([0x1F, 0x02])  # MD2: Vertical scroll mode
 
     def set_horizontal_scroll(self) -> None:
@@ -368,6 +396,7 @@ class NAGP1250:
 
         :return: None
         """
+        self.mode = "MD3"
         self.send_bytes([0x1F, 0x03])  # MD3: Horizontal scroll mode
 
     def set_mode_md1(self) -> None:
@@ -762,6 +791,7 @@ class NAGP1250:
         if not (0 <= mode <= 1):
             raise ValueError(f"Mode {mode} must be between 0 and 1")
 
+        self.base_window_mode = mode
         if mode == 0:
             self.width = 140
             self.height = 32
