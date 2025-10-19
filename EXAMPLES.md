@@ -63,6 +63,8 @@ There are a couple of helper functions in the example code that can align the ho
 
 ### ESP32 Wi-Fi Weather
 
+Displays current weather conditions icon with temperature and humidity (upper right corner) as well as the current time after setting with NTP.
+
 * Uses the ESP32's built-in Wi-Fi module to connect to a Wi-Fi network.
   * Leverages [Micropython WifiManager](https://github.com/mitchins/micropython-wifimanager).
 * Fetches weather data from [OpenWeatherMap](https://openweathermap.org).
