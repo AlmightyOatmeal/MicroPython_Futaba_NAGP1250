@@ -67,13 +67,15 @@ for bit_i in range(256):
 class NAGP1250:
     width = 140
     height = 32
-    mode = "<device default>"
-    luminance = None
-    cursor_blink = None
-    font_id = "<device default>"
-    character_code = "<device default>"
+    mode = "MD1"
+    luminance = 4
+    cursor_blink = 0
+    font_id = 0
+    character_code = 0
     base_window_mode = 0
     debug = False
+    write_mode = 0
+    character_display_width = 1
 
     def __init__(self, spi: SPI, reset: Pin | int = None, sbusy: Pin | int = None,
                  luminance: int = 4, cursor_blink: int | None = None, mode: str | None = None,
@@ -110,11 +112,11 @@ class NAGP1250:
         # maximum baud rate of 115,200.
         self.spi = spi
 
-        self.define_base_window(mode=base_window_mode)
-
         # Initialize the display
         self.reset_display()
         self.initialize()
+
+        self.define_base_window(mode=base_window_mode)
 
         # Set the display initial state
         self.set_luminance(luminance=luminance)
@@ -150,9 +152,29 @@ class NAGP1250:
             f"mode={self.mode}",
             f"base_window_mode={self.base_window_mode}",
             f"cursor_blink={self.cursor_blink}",
+            f"font_id={self.font_id}",
+            f"base_window_mode={self.base_window_mode}",
+            f"write_mode={self.write_mode}",
+            f"character_display_width={self.character_display_width}",
             f"debug={self.debug}"
         ]
         return f"<NAGP1250({", ".join(params)})>"
+
+    def _instance_defaults(self):
+        """
+        Reset instance values to the device defaults.
+        """
+        # Set instance defaults
+        self.width = 140
+        self.height = 32
+        self.mode = "MD1"
+        self.luminance = 4
+        self.cursor_blink = 0
+        self.font_id = 0
+        self.character_code = 0
+        self.base_window_mode = 0
+        self.write_mode = 0
+        self.character_display_width = 1
 
     def _wait_for_sbusy(self, timeout_us: int = 10000) -> None:
         """
@@ -237,6 +259,8 @@ class NAGP1250:
             time.sleep_ms(100)
             self.pin_reset.value(1)
             time.sleep_ms(100)
+
+        self.set_luminance(luminance=self.luminance)
         return None
 
     # TODO: Why doesn't this seem to work?
@@ -329,6 +353,8 @@ class NAGP1250:
         """
         if not (0 <= mode <= 3):
             raise ValueError(f"Write logic mode {mode} must be 0–3")
+
+        self.write_mode = mode
         self.send_bytes([0x1F, 0x77, mode])
 
     def set_horizontal_scroll_speed(self, speed: int) -> None:
@@ -469,6 +495,7 @@ class NAGP1250:
         if not (0 <= mode <= 3):
             raise ValueError(f"Mode {mode} must be between 0 and 3")
 
+        self.character_display_width = mode
         self.send_bytes([0x1F, 0x28, 0x67, 0x03, mode])
 
     def set_cursor_position(self, x: int, y: int) -> None:
