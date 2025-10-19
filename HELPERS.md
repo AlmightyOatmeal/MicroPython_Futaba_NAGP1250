@@ -10,6 +10,9 @@
 
 This assumes the glyphs are black and white and to your liking.
 
+Requirements:
+* `cairosvg`
+
 ```python
 import os
 from cairosvg import svg2png
@@ -32,6 +35,10 @@ for file in os.listdir(svg_path):
 ## Convert PNG to Bitmap
 
 This saves three different sizes of bitmap arrays, 32x32, 24x24, and 16x16. 
+
+Requirements:
+* `Pillow`
+* `numpy`
 
 ```python
 import os
