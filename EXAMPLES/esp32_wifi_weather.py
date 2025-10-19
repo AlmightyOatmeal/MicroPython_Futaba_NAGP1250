@@ -504,12 +504,13 @@ while True:
             bitmap = vfd.draw_graphic_box(bitmap=bitmap, x=0, y=0, width=humidity_width, height=humidity_height, radius=5, fill=True)
             packed = vfd.pack_bitmap(bitmap=bitmap, width=humidity_width, height=humidity_height)
             vfd.do_select_window(window_num=2)
-            vfd.do_home()
             vfd.clear_window(window_num=2)
             vfd.display_graphic_image(image_data=packed, width=humidity_width, height=humidity_height)
 
             # Give the display some processing time.
             time.sleep_ms(3)
+
+            vfd.do_select_window(window_num=0)
 
             if not wx_initial_load:
                 wx_initial_load = True
@@ -533,6 +534,7 @@ while True:
             # Give the display some processing time.
             time.sleep_ms(3)
 
+            vfd.do_select_window(window_num=0)
             vfd.set_cursor_position(x=32, y=0)
             vfd.set_font_magnification(h=2, v=2)
             # Assign the formatted string to a variable, so we call it multiple times without going through the
@@ -575,8 +577,8 @@ while True:
             vfd.do_select_window(window_num=2)
             # Set cursor relative to the active window ;-)
             vfd.set_cursor_position(x=4, y=0)
-            vfd.set_font_magnification(h=1, v=1)
             vfd.set_write_logic(mode=WRITE_MODE_XOR)
+            vfd.set_font_magnification(h=1, v=1)
             vfd.write_text(f"{humidity}%")
             vfd.set_write_logic(mode=WRITE_MODE_NORMAL)
 
