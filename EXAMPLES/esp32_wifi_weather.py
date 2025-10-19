@@ -64,8 +64,8 @@ ICON_MAP = {
         "n": "forecast-weather-night-cloud-moon"
     },
     "04": {  # broken clouds
-        "d": "forecast-weather-clouds-cloudy",
-        "n": "forecast-weather-clouds-cloudy"
+        "d": "forecast-weather-sun-cloud",
+        "n": "forecast-weather-night-cloud-moon"
     },
     "09": {  # shower rain
         "d": "forecast-weather-day-rain-sun-cloud",
@@ -505,6 +505,7 @@ while True:
             packed = vfd.pack_bitmap(bitmap=bitmap, width=humidity_width, height=humidity_height)
             vfd.do_select_window(window_num=2)
             vfd.do_home()
+            vfd.clear_window(window_num=2)
             vfd.display_graphic_image(image_data=packed, width=humidity_width, height=humidity_height)
 
             # Give the display some processing time.
