@@ -16,7 +16,7 @@ from wifi_manager import WifiManager
 
 # Sign up for a free account at https://openweathermap.org/ to get your API key. It took about a half hour for my
 # API key to become active, which was a small annoyance, but it was worth the wait.
-OPENWEATHER_API_KEY = "9961eb1f2399d029ea203c83d22d97f8"
+OPENWEATHER_API_KEY = "<API KEY>"
 
 # https://openweathermap.org/current#name
 WX_CITY = "Milwaukee,US"
