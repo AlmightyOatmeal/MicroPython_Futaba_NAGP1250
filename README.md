@@ -1,5 +1,6 @@
 <!-- TOC -->
 * [MicroPython Futaba NAGP1250 VFD display driver](#micropython-futaba-nagp1250-vfd-display-driver)
+  * [Arduino Library](#arduino-library)
   * [Tested on](#tested-on)
   * [Display Features](#display-features)
   * [OMG WHERE DO I GET ONE?](#omg-where-do-i-get-one)
@@ -58,6 +59,9 @@ If you like my work and would like to buy me a coffee, please consider donating 
 |----------------------------------------------------|-----------------------------------------------|
 | ![donate via cash app](_images/donate_cashapp.jpg) | ![donate via venmo](_images/donate_venmo.jpg) |
 
+## Arduino Library
+
+A fellow developer has written an Arduino library that can unleash some CRAZY performance of the display including high frame rate video! If you're interested, please check out [FutabaNAGP1250_Arduino](https://github.com/piLeoni/FutabaNAGP1250_Arduino) and send them some love!
 
 ## Tested on
 
