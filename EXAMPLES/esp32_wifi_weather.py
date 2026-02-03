@@ -440,6 +440,8 @@ while True:
             # Remove the user-defined windows from the "waiting for Wi-Fi" message
             vfd.delete_user_window(window_num=1, clear=True)
             vfd.delete_user_window(window_num=2, clear=True)
+            vfd.delete_user_window(window_num=3, clear=True)
+            vfd.delete_user_window(window_num=4, clear=True)
             vfd.clear_window(window_num=0)
             did_clear = True
 
@@ -448,6 +450,10 @@ while True:
             vfd.define_user_window(window_num=1, x=32, y=2, w=75, h=2)
             # Window for the humidity box
             vfd.define_user_window(window_num=2, x=110, y=0, w=29, h=1)
+            # Windows for icon
+            vfd.define_user_window(window_num=3, x=0, y=0, w=32, h=4)
+            # Windows for temperature
+            vfd.define_user_window(window_num=4, x=32, y=0, w=98, h=2)
 
         # Only update the weather every 5 minutes to save on API calls.
         wx_update_counter += 1
@@ -485,15 +491,15 @@ while True:
                 last_icon = display_icon
 
                 icon_data = vfd.pack_bitmap(bitmap=icon_bitmap, width=32, height=32)
-                vfd.do_select_window(window_num=0)
+                vfd.do_select_window(window_num=3)
                 vfd.do_home()
                 vfd.display_graphic_image(image_data=icon_data, width=32, height=32)
 
             # Give the display some processing time.
             time.sleep_ms(3)
 
-            vfd.do_select_window(window_num=0)
-            vfd.set_cursor_position(x=32, y=0)
+            vfd.do_select_window(window_num=4)
+            vfd.do_home()
             vfd.set_font_magnification(h=2, v=2)
             # Assign the formatted string to a variable, so we call it multiple times without going through the
             # extra steps of string formatting.
@@ -506,11 +512,11 @@ while True:
             temp_formatted_len = len(temp_formatted)
 
             # Set the spacing for the degrees and units based on the length of the temperature string.
-            deg_cursor_pos = 75  # defaults if temp is like <int>.<int> (3 characters)
+            deg_cursor_pos = 43  # defaults if temp is like <int>.<int> (3 characters)
             if temp_formatted_len == 4:  # if temp is <int><int>.<int> (4 characters)
-                deg_cursor_pos = 88
+                deg_cursor_pos = 56
             elif temp_formatted_len == 5:  # mmmm, toasty (5 characters)
-                deg_cursor_pos = 103
+                deg_cursor_pos = 71
 
             # Add the degree symbol on row 0 and the temp unit on row 1 below it.
             vfd.set_font_magnification(h=1, v=1)
