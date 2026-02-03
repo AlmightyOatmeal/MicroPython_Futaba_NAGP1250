@@ -3,26 +3,33 @@ from futaba.NAGP1250 import WRITE_MODE_NORMAL, WRITE_MODE_XOR
 import json
 from machine import SPI
 import ntptime
+import os
 import time
 import urequests
 from wifi_manager import WifiManager
 
 # Tested on:
 # - MicroPython v1.26.1; LOLIN_S2_MINI
+# - MicroPython v1.27.0; LOLIN_S2_MINI
 
 #
 # Basic Setup
 #
 
-# Sign up for a free account at https://openweathermap.org/ to get your API key. It took about a half hour for my
+# Sign up for a free account at https://openweathermap.org/ to get your API key. It took about a half-hour for my
 # API key to become active, which was a small annoyance, but it was worth the wait.
-OPENWEATHER_API_KEY = "<API KEY>"
+# Check to see if there is a file with the weather API key on the filesystem otherwise try a hard-coded key.
+if os.stat("_weather_key"):
+    with open("_weather_key", "r") as f:
+        OPENWEATHER_API_KEY = f.read().strip()
+else:
+    OPENWEATHER_API_KEY = "<API KEY>"
 
 # https://openweathermap.org/current#name
 WX_CITY = "Milwaukee,US"
 WX_LANG = "EN"
-WX_UNITS = "metric"
-# WX_UNITS = "imperial"
+# WX_UNITS = "metric"
+WX_UNITS = "imperial"
 
 # Time timezone from https://worldtimeapi.org/api/timezone/
 TIMEZONE = "America/Chicago"
@@ -90,6 +97,42 @@ ICON_MAP = {
 }
 
 
+def do_http_get(url: str, retries: int = 50000) -> dict | None:
+    """
+    Performs an HTTP GET request to the specified URL with a retry mechanism.
+
+    Repeatedly attempts to fetch data from the provided URL up to the given number of retries. If the response status
+    code is 200, the JSON response body is returned. Otherwise, it retries after a delay. If the maximum retry count
+    is exceeded, the function returns None.
+
+    :param url: The URL to send the HTTP GET request to.
+    :type url: str
+    :param retries: The maximum number of retries before stopping. Defaults to 50,000.
+    :type retries: int
+    :return: A dictionary representation of the JSON response if successful, or None if all retries are exhausted.
+    :rtype: dict | None
+    """
+    retry_count = 0
+    while True:
+        if retry_count >= retries:
+            return None
+
+        try:
+            response = urequests.get(url=url)
+
+            if response.status_code == 200:
+                return response.json()
+            else:
+                print(f"[DO_HTTP_GET][ERROR] Failed to get weather data: HTTP {response.status_code}, retrying in 10 seconds...")
+                print(f"[DO_HTTP_GET][DEBUG] URL: {url}")
+        except Exception as e:
+            print(f"[DO_HTTP_GET][ERROR] Failed to get weather data: {e}")
+            print(f"[DO_HTTP_GET][DEBUG] URL: {url}")
+        finally:
+            retry_count += 1
+            time.sleep(10)
+
+
 #
 # Weather Logic
 #
@@ -120,15 +163,7 @@ def get_raw_weather_data(city: str, lang: str = "EN", units: str = "metric") -> 
     params_str = '&'.join([f"{k}={v}" for k, v in params_dict.items()])
 
     url = f"https://api.openweathermap.org/data/2.5/weather?{params_str}"
-    while True:
-        response = urequests.get(url=url)
-
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print(f"[ERROR] Failed to get weather data: HTTP {response.status_code}, retrying in 10 seconds...")
-            print(f"[DEBUG] URL: {url}")
-            time.sleep(10)
+    return do_http_get(url=url)
 
 
 def get_weather_data(city: str, lang: str = "EN", units: str = "metric") -> tuple[str, float, int]:
@@ -201,11 +236,10 @@ def get_timezone_offset(timezone):
     print(f"[INFO] Getting timezone offset for {timezone}...")
 
     # This API also supports HTTP if HTTPS is not working correctly.
-    response = urequests.get(f"https://worldtimeapi.org/api/timezone/{timezone}")
+    url = f"https://worldtimeapi.org/api/timezone/{timezone}"
+    response_data = do_http_get(url=url)
 
-    if response.status_code == 200:
-        response_data = response.json()
-
+    if response_data is not None:
         # Get offset in seconds
         utc_offset_seconds = response_data['raw_offset'] + response_data.get('dst_offset', 0)
         utc_offset_hours = utc_offset_seconds / 3600
@@ -215,7 +249,7 @@ def get_timezone_offset(timezone):
 
         return utc_offset_seconds
     else:
-        print(f"[ERROR] Failed to get timezone data: HTTP {response.status_code}")
+        print(f"[ERROR] Failed to get timezone data: {response_data}")
         return False
 
 
@@ -287,7 +321,7 @@ def my_connection_handler(event, **kwargs):
     global UTC_OFFSET_SEC
 
     if event == 'connected':
-        print(f"[INFO] Connected to {kwargs.get('ssid')} with IP {kwargs.get('ip')}")
+        print(f"[WIFI][INFO] Connected to {kwargs.get('ssid')} with IP {kwargs.get('ip')}")
         # Settle time to avoid connection issues
         time.sleep(5)
 
@@ -306,16 +340,16 @@ def my_connection_handler(event, **kwargs):
 
         # Example of printing the local time tuple
         local = get_local_time(utc_offset_seconds=UTC_OFFSET_SEC)
-        print(f"[INFO] Using stored offset: {local}")
+        print(f"[WIFI][INFO] Using stored offset: {local}")
 
     elif event == 'disconnected':
-        print("[INFO] Lost WiFi connection")
+        print("[WIFI][INFO] Lost WiFi connection")
 
     elif event == 'ap_started':
-        print(f"[INFO] Started access point: {kwargs.get('essid')}")
+        print(f"[WIFI][INFO] Started access point: {kwargs.get('essid')}")
 
     elif event == 'connection_failed':
-        print(f"[INFO] Failed to connect to: {kwargs.get('attempted_networks')}")
+        print(f"[WIFI][INFO] Failed to connect to: {kwargs.get('attempted_networks')}")
 
 
 # Add the connection handler to WifiManager
@@ -417,7 +451,7 @@ while True:
 
         # Only update the weather every 5 minutes to save on API calls.
         wx_update_counter += 1
-        if wx_update_counter >= 5 or not wx_initial_load:
+        if wx_update_counter >= 30 or not wx_initial_load:
             vfd.do_select_window(window_num=0)
 
             print("[INFO] updating weather data...")
@@ -499,7 +533,7 @@ while True:
 
             # Add the humidity to the beveled box but switch mode to XOR so the text will appear inverted! Cool, huh? ;-)
             vfd.do_select_window(window_num=2)
-            # Set cursor relative to the active window ;-)
+            # Set the cursor relative to the active window ;-)
             vfd.set_cursor_position(x=4, y=0)
             vfd.set_write_logic(mode=WRITE_MODE_XOR)
             vfd.set_font_magnification(h=1, v=1)
@@ -523,4 +557,4 @@ while True:
     # the number of API calls made and to keep it under the 1,000 API call limit for a free plan. If you reduce this
     # number, then update the logic above for the number of updates before the weather gets updated; for example, if
     # this gets changed to 30 seconds, then update the weather check to 10 instead of 5 to keep it at 5 minutes.
-    time.sleep(60)
+    time.sleep(10)
