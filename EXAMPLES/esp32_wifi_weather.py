@@ -498,6 +498,7 @@ while True:
             # Give the display some processing time.
             time.sleep_ms(3)
 
+            vfd.clear_window(window_num=4)
             vfd.do_select_window(window_num=4)
             vfd.do_home()
             vfd.set_font_magnification(h=2, v=2)
