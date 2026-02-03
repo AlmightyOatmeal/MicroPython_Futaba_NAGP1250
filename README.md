@@ -69,6 +69,7 @@ A fellow developer has written an Arduino library that can unleash some CRAZY pe
   * Tested on MicroPython 1.25.0
   * Tested on MicroPython 1.26.0
   * Tested on MicroPython 1.26.1
+  * Tested on MicroPython 1.27.0
 
 * Hardware:
   * Tested on ESP32 S2 Mini

@@ -854,7 +854,7 @@ class NAGP1250:
         integer (either 0 or 1) representing the state of the pixel. Columns are processed sequentially, and the
         packed data is returned as a bytearray.
 
-        :param bitmap: The list representing the bitmap.
+        :param bitmap: A list representing the bitmap.
         :type bitmap: list | tuple[list | tuple[int]]
         :param width: The width of the bitmap, representing the number of columns.
         :type width: int
@@ -969,7 +969,7 @@ class NAGP1250:
         replicate the points across the other octants. The algorithm takes into account the constraints of the
         display dimensions (width and height) to ensure that the circle does not exceed the bitmap's boundaries.
 
-        :param bitmap: The list representing the bitmap.
+        :param bitmap: A list representing the bitmap.
         :type bitmap: list[list[int]]
         :param cx: Integer coordinate for the x-center of the circle.
         :type cx: int
@@ -1027,7 +1027,7 @@ class NAGP1250:
         replicate the points across the other octants. The algorithm takes into account the constraints of the
         display dimensions (width and height) to ensure that the circle does not exceed the bitmap's boundaries.
 
-        :param bitmap: The list representing the bitmap.
+        :param bitmap: A list representing the bitmap.
         :type bitmap: list[list[int]]
         :param cx: Integer coordinate for the x-center of the circle.
         :type cx: int
@@ -1092,7 +1092,7 @@ class NAGP1250:
         This method iterates through a given list or tuple of circle definitions (each defined by x-coordinate,
         y-coordinate, and radius) and draws them on the provided bitmap.
 
-        :param bitmap: The list representing the bitmap.
+        :param bitmap: A list representing the bitmap.
         :type bitmap: list[list[int]]
         :param circles: A list or tuple containing the definitions of circles.
         type circles: list | tuple[list | tuple[int]]
@@ -1114,7 +1114,8 @@ class NAGP1250:
         return bitmap
 
     @staticmethod
-    def draw_graphic_box(bitmap, x, y, width, height, radius=0, fill=False):
+    def draw_graphic_box(bitmap: list[list[int]], x: int, y: int, width: int, height: int, radius: int = 0,
+                         fill: bool = False):
         """
         Draws a box with quarter-circle rounded corners, tangent-aligned to edges.
 
@@ -1125,6 +1126,8 @@ class NAGP1250:
             height (int): Height of the box.
             radius (int): Radius of the rounded corners.
             fill (bool): Whether to fill the interior of the box.
+            :param y:
+            :param x:
         """
         bitmap_height = len(bitmap)
         bitmap_width = len(bitmap[0]) if bitmap_height > 0 else 0
