@@ -453,7 +453,7 @@ while True:
             # Windows for icon
             vfd.define_user_window(window_num=3, x=0, y=0, w=32, h=4)
             # Windows for temperature
-            vfd.define_user_window(window_num=4, x=32, y=0, w=98, h=2)
+            vfd.define_user_window(window_num=4, x=32, y=0, w=67, h=2)
 
         # Only update the weather every 5 minutes to save on API calls.
         wx_update_counter += 1
@@ -498,6 +498,7 @@ while True:
             # Give the display some processing time.
             time.sleep_ms(3)
 
+            # TODO: Find better way to handle temp as to not overlap with the humidity display.
             vfd.clear_window(window_num=4)
             vfd.do_select_window(window_num=4)
             vfd.do_home()
