@@ -179,6 +179,7 @@ make.bat
 Makefile
 docs/
 EXAMPLES/_weather_key
+EXAMPLES/_time_key
 out.png
 edges.png
 bw_outline.png

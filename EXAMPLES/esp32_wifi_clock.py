@@ -2,15 +2,23 @@ from futaba import NAGP1250
 import time
 from machine import SPI
 import ntptime
+import os
 import urequests
 from wifi_manager import WifiManager
 
 # Tested on:
 # - MicroPython v1.26.1; LOLIN_S2_MINI
+# - MicroPython v1.27.0; LOLIN_S2_MINI
 
 #
 # Basic Setup
 #
+
+if os.stat("_time_key"):
+    with open("_time_key", "r") as f:
+        TIME_API_KEY = f.read().strip()
+else:
+    TIME_API_KEY = "<API KEY>"
 
 PIN_SIN = 33
 PIN_SCK = 37
@@ -25,6 +33,47 @@ TIMEZONE = "America/Chicago"
 WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August",
           "September", "October", "November", "December"]
+
+
+def do_http_get(url: str, retries: int = 50000, header: dict = None) -> dict | None:
+    """
+    Performs an HTTP GET request to the specified URL with a retry mechanism.
+
+    Repeatedly attempts to fetch data from the provided URL up to the given number of retries. If the response status
+    code is 200, the JSON response body is returned. Otherwise, it retries after a delay. If the maximum retry count
+    is exceeded, the function returns None.
+
+    :param url: The URL to send the HTTP GET request to.
+    :type url: str
+    :param retries: The maximum number of retries before stopping. Defaults to 50,000.
+    :type retries: int
+    :param header: (optional) Additional headers to include in the request. (default: None)
+    :type header: dict | None
+    :return: A dictionary representation of the JSON response if successful, or None if all retries are exhausted.
+    :rtype: dict | None
+    """
+    retry_count = 0
+    while True:
+        if retry_count >= retries:
+            return None
+
+        try:
+            if header:
+                response = urequests.get(url=url, headers=header)
+            else:
+                response = urequests.get(url=url)
+
+            if response.status_code == 200:
+                return response.json()
+            else:
+                print(f"[DO_HTTP_GET][ERROR] Failed to get weather data: HTTP {response.status_code}, retrying in 10 seconds...")
+                print(f"[DO_HTTP_GET][DEBUG] URL: {url}")
+        except Exception as e:
+            print(f"[DO_HTTP_GET][ERROR] Failed to get weather data: {e}")
+            print(f"[DO_HTTP_GET][DEBUG] URL: {url}")
+        finally:
+            retry_count += 1
+            time.sleep(10)
 
 
 #
@@ -46,24 +95,22 @@ def get_timezone_offset(timezone):
     :rtype: Union[int, bool]
     """
     # Get timezone offset from worldtimeapi.org
-    print(f"Getting timezone offset for {timezone}...")
+    print(f"[INFO] Getting timezone offset for {timezone}...")
 
-    # This API also supports HTTP if HTTPS is not working correctly.
-    response = urequests.get(f"https://worldtimeapi.org/api/timezone/{timezone}")
+    url = f"https://world-time-api3.p.rapidapi.com/timezone/{timezone}"
+    response_data = do_http_get(url=url, header={'x-rapidapi-key': TIME_API_KEY})
 
-    if response.status_code == 200:
-        data = response.json()
-
+    if response_data is not None:
         # Get offset in seconds
-        utc_offset_seconds = data['raw_offset'] + data.get('dst_offset', 0)
+        utc_offset_seconds = response_data['raw_offset'] + response_data.get('dst_offset', 0)
         utc_offset_hours = utc_offset_seconds / 3600
 
-        print(f"Timezone offset: {utc_offset_hours} hours ({utc_offset_seconds} seconds)")
-        print(f"DST active: {data.get('dst', False)}")
+        print(f"[INFO] Timezone offset: {utc_offset_hours} hours ({utc_offset_seconds} seconds)")
+        print(f"[INFO] DST active: {response_data.get('dst', False)}")
 
         return utc_offset_seconds
     else:
-        print(f"Failed to get timezone data: HTTP {response.status_code}")
+        print(f"[ERROR] Failed to get timezone data: {response_data}")
         return False
 
 

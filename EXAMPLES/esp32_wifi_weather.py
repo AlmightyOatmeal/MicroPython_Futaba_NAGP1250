@@ -25,6 +25,12 @@ if os.stat("_weather_key"):
 else:
     OPENWEATHER_API_KEY = "<API KEY>"
 
+if os.stat("_time_key"):
+    with open("_time_key", "r") as f:
+        TIME_API_KEY = f.read().strip()
+else:
+    TIME_API_KEY = "<API KEY>"
+
 # https://openweathermap.org/current#name
 WX_CITY = "Milwaukee,US"
 WX_LANG = "EN"
@@ -97,7 +103,7 @@ ICON_MAP = {
 }
 
 
-def do_http_get(url: str, retries: int = 50000) -> dict | None:
+def do_http_get(url: str, retries: int = 50000, header: dict = None) -> dict | None:
     """
     Performs an HTTP GET request to the specified URL with a retry mechanism.
 
@@ -109,6 +115,8 @@ def do_http_get(url: str, retries: int = 50000) -> dict | None:
     :type url: str
     :param retries: The maximum number of retries before stopping. Defaults to 50,000.
     :type retries: int
+    :param header: (optional) Additional headers to include in the request. (default: None)
+    :type header: dict | None
     :return: A dictionary representation of the JSON response if successful, or None if all retries are exhausted.
     :rtype: dict | None
     """
@@ -118,7 +126,10 @@ def do_http_get(url: str, retries: int = 50000) -> dict | None:
             return None
 
         try:
-            response = urequests.get(url=url)
+            if header:
+                response = urequests.get(url=url, headers=header)
+            else:
+                response = urequests.get(url=url)
 
             if response.status_code == 200:
                 return response.json()
@@ -235,9 +246,8 @@ def get_timezone_offset(timezone):
     # Get timezone offset from worldtimeapi.org
     print(f"[INFO] Getting timezone offset for {timezone}...")
 
-    # This API also supports HTTP if HTTPS is not working correctly.
-    url = f"https://worldtimeapi.org/api/timezone/{timezone}"
-    response_data = do_http_get(url=url)
+    url = f"https://world-time-api3.p.rapidapi.com/timezone/{timezone}"
+    response_data = do_http_get(url=url, header={'x-rapidapi-key': TIME_API_KEY})
 
     if response_data is not None:
         # Get offset in seconds
@@ -428,7 +438,7 @@ WifiManager.setup_network()
 did_clear = False
 
 # Only read from the filesystem if the icon changes
-last_icon = ''
+last_icon = ""
 
 # Only update the weather every 5 minutes to save on API calls.
 wx_update_counter = 0

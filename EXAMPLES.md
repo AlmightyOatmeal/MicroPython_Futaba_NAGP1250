@@ -42,7 +42,8 @@
 * Uses the ESP32's built-in Wi-Fi module to connect to a Wi-Fi network.
   * Leverages [Micropython WifiManager](https://github.com/mitchins/micropython-wifimanager).
 * Synchronizes time with NTP
-* Fetches timezone information from [WorldTimeAPI](https://worldtimeapi.org).
+* Fetches timezone information from [WorldTimeAPI](https://timeapi.world).
+  * This new API requires an API key which can be stored in a file called `_time_key` or in-code. 
 * Uses user-defined windows so only the portion of the display that needs updating is updated.
 
 This example assumes `wifi_manager.py` and `networks.json` in the root directory of the ESP32 alongside the script.
@@ -68,7 +69,9 @@ Displays current weather conditions icon with temperature and humidity (upper ri
 * Uses the ESP32's built-in Wi-Fi module to connect to a Wi-Fi network.
   * Leverages [Micropython WifiManager](https://github.com/mitchins/micropython-wifimanager).
 * Fetches weather data from [OpenWeatherMap](https://openweathermap.org).
-  * (this service requires a free account to get an API key)
+  * This API requies an API key which can be stored in a file called `_weather_key` or in-code.
+* Fetches timezone information from [WorldTimeAPI](https://timeapi.world).
+  * This new API requires an API key which can be stored in a file called `_time_key` or in-code.
 * Relies on user-provided bitmaps stores as arrays in JSON files in `/weather/32` on the ESP32 filesystem.
   * Please refer to [HELPERS.md](HELPERS.md) for the code I used to convert and generate bitmap JSON.
 
