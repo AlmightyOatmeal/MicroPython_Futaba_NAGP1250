@@ -329,7 +329,7 @@ def my_connection_handler(event, **kwargs):
 
         # Enter a loop trying to get the current timezone offset until we have a valid value
         while not UPDATED_OFFSET:
-            UTC_OFFSET_SEC = get_timezone_offset(timezone="America/Chicago")
+            UTC_OFFSET_SEC = get_timezone_offset(timezone=TIMEZONE)
             if UTC_OFFSET_SEC is not False:
                 UPDATED_OFFSET = True
             time.sleep(5)
